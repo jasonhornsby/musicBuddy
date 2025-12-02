@@ -9,4 +9,11 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children()}
+<div class="h-dvh w-dvw flex flex-col overflow-hidden">
+	<header class="p-4 border-b">
+		<h1>Music Analyser</h1>
+	</header>
+	<main class="flex-1 overflow-y-auto">
+		{@render children()}
+	</main>
+</div>
