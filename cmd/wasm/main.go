@@ -3,26 +3,40 @@
 package main
 
 import (
+	"bytes"
+	"io"
 	"syscall/js"
+
+	"github.com/gopxl/beep/mp3"
 )
 
-func add(this js.Value, args []js.Value) interface{} {
-	println("add function called")
-	// args holds the arguments passed from JS
-	// We should validate length, but for this example we assume correct input
-	v1 := args[0].Int()
-	v2 := args[1].Int()
-	println("value1Str: ", v1)
-	println("value2Str: ", v2)
+func loadAudio(this js.Value, args []js.Value) interface{} {
+	println("Received audio data")
+	jsUint8Array := args[0]
+	length := jsUint8Array.Length()
 
-	// Return the result
-	return v1 + v2
+	data := make([]byte, length)
+
+	js.CopyBytesToGo(data, jsUint8Array)
+
+	reader := bytes.NewReader(data)
+	readCloser := io.NopCloser(reader)
+
+	_, format, err := mp3.Decode(readCloser)
+	if err != nil {
+		println("Error decoding audio: ", err)
+		return nil
+	}
+
+	println("Format: ", format.SampleRate, format.NumChannels, format.Precision)
+
+	return nil
 }
 
 func main() {
 	c := make(chan struct{}, 0)
 
-	js.Global().Set("add", js.FuncOf(add))
+	js.Global().Set("loadAudio", js.FuncOf(loadAudio))
 
 	println("WASM module initialized")
 

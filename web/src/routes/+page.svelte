@@ -1,6 +1,7 @@
-<script>
+<script lang="ts">
     import { onMount } from 'svelte';
     import {Button} from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
   
     let result = "...";
     let isLoaded = false;
@@ -23,17 +24,31 @@
       isLoaded = true;
       console.log("Go Wasm loaded via SvelteKit!");
     });
-  
-    function handleCalculate() {
-      if (!isLoaded) return;
-      // Call the function exposed by Go
-      result = window.add(10, 20); 
-      console.log("result: ", result);
+
+    async function handleFileChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const result = await window.loadAudio(uint8Array);
+            console.log("result: ", result);
+        } catch (e) {
+            console.error("Error loading audio: ", e);
+        }
     }
 </script>
 
-<h1>SvelteKit + Go Wasm</h1>
-
-<Button onclick={handleCalculate} disabled={!isLoaded}>Calculate 10 + 20</Button>
-
-<p>Result: {result}</p>
+{#if isLoaded}
+	<h1>SvelteKit + Go Wasm</h1>
+	<input type="file" on:change={handleFileChange} accept="audio/mp3" />
+{:else}
+	<div class="h-dvh w-dvw flex items-center justify-center">
+		<div class="flex flex-col items-center justify-center">
+			<Spinner class="size-10 text-muted-foreground" />
+			<span class="text-sm text-muted-foreground">Loading</span>
+		</div>
+	</div>
+{/if}
