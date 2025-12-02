@@ -68,7 +68,7 @@ func (pp *PlotParser) Parse(data *AudioData) error {
 		return err
 	}
 
-	err = p.Save(10*vg.Inch, 10*vg.Inch, "audio_plot.png")
+	err = p.Save(10*vg.Inch, 10*vg.Inch, "output/audio_plot.png")
 	if err != nil {
 		return err
 	}

@@ -26,7 +26,7 @@ func main() {
 	fmt.Println("Registering parsers")
 	parserList := []parsers.Parser{
 		&parsers.PlotParser{SamplesPerPoint: 500},
-		&parsers.SpectralFluxParser{},
+		&parsers.SpectralFluxParser{WindowSize: 1024, HopSize: 512},
 	}
 
 	for _, parser := range parserList {
@@ -61,49 +61,3 @@ func loadAudio(filename string) (*parsers.AudioData, error) {
 
 	return &parsers.AudioData{Samples: buffer, Format: format}, nil
 }
-
-/*
-func plotPoints(streamer beep.Streamer, format beep.Format, samplesPerPoint int) {
-	sampleDuration := format.SampleRate.D(samplesPerPoint)
-
-	fmt.Println("Sample duration: ", sampleDuration)
-
-	p := plot.New()
-	p.Title.Text = "Audio Plot"
-	p.X.Label.Text = "Time"
-	p.Y.Label.Text = "Amplitude"
-
-	sample := make([][2]float64, samplesPerPoint)
-
-	pointsLeft := make(plotter.XYs, int(format.SampleRate)/samplesPerPoint)
-
-	for i := 0; i < int(format.SampleRate)/samplesPerPoint; i++ {
-		_, ok := streamer.Stream(sample[:])
-		if !ok {
-			break
-		}
-		average := averageSamples(sample)
-		pointsLeft[i].X = float64(i) * sampleDuration.Seconds()
-		pointsLeft[i].Y = average[0]
-	}
-
-	err := plotutil.AddLinePoints(p, "Left", pointsLeft)
-	if err != nil {
-		log.Fatal("Failed to add line points: ", err)
-	}
-
-	if err := p.Save(10*vg.Inch, 10*vg.Inch, "audio_plot.png"); err != nil {
-		log.Fatal("Failed to save plot: ", err)
-	}
-}
-
-func averageSamples(samples [][2]float64) [2]float64 {
-	sumLeft := 0.0
-	sumRight := 0.0
-	for _, sample := range samples {
-		sumLeft += sample[0]
-		sumRight += sample[1]
-	}
-	return [2]float64{sumLeft / float64(len(samples)), sumRight / float64(len(samples))}
-}
-*/
