@@ -1,6 +1,6 @@
 import { getContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
-import { audioActions, LoadAudioAction, UnloadAudioAction } from "./audio.actions";
+import { audioActions, GetAudioMetadataAction, LoadAudioAction, UnloadAudioAction, type AudioMetadata } from "./audio.actions";
 
 export class AudioContext {
     private _worker: Worker | null = null;
@@ -10,6 +10,9 @@ export class AudioContext {
 
     private _parsingAudio = $state(false);
     private _audioLoaded = $state(false);
+
+    // Insights
+    private _metadata = $state<AudioMetadata | null>(null);
 
     get isWorkerReady() {
         return this._isWorkerReady;
@@ -21,6 +24,10 @@ export class AudioContext {
 
     get audioLoaded() {
         return this._audioLoaded;
+    }
+
+    get metadata() {
+        return this._metadata;
     }
 
     async initWorker() {
@@ -69,6 +76,12 @@ export class AudioContext {
 
         this._parsingAudio = false;
         this._audioLoaded = true;
+    }
+
+    async getAudioMetadata() {
+        console.log("Getting audio metadata");
+        const result = await this.sendMessage<AudioMetadata>(GetAudioMetadataAction.requestKey);
+        this._metadata = result;
     }
 
     async loadAudioFromSrc(src: string) {

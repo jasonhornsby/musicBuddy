@@ -4,6 +4,7 @@
 	import * as Item from '$lib/components/ui/item';
 	import { ChevronDown, RotateCcw } from 'lucide-svelte';
 	import { getAudioContext } from '$lib/context/audio.svelte';
+	import { GeneralPanel } from './panels';
 
 	type View = {
 		id: string;
@@ -25,7 +26,11 @@
 
 <Sidebar.Provider>
 	<div class="h-full w-full">
-		<main></main>
+		<main>
+			{#if selectedView.id === 'general'}
+				<GeneralPanel />
+			{/if}
+		</main>
 	</div>
 	<Sidebar.Root side="right">
 		<Sidebar.Header>

@@ -56,13 +56,22 @@ func unloadAudio(this js.Value, args []js.Value) interface{} {
 }
 
 func getAudioMetadata(this js.Value, args []js.Value) interface{} {
+	println("Getting audio metadata", isInitialized)
 	if !isInitialized {
 		return js.ValueOf(false)
 	}
 
+	metadata := parsers.GetAudioMetadata(audioData)
+
+	println("Audio metadata: ", metadata)
+
 	println("Returning audio metadata")
 
-	return js.ValueOf(true)
+	return map[string]interface{}{
+		"sampleRate": metadata.SampleRate,
+		"channels":   metadata.Channels,
+		"durationMs": metadata.DurationMs,
+	}
 }
 
 func main() {

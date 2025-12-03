@@ -26,6 +26,8 @@ async function init() {
 self.onmessage = async (event) => {
     const { type, payload, id } = event.data;
 
+    console.log("Received message: ", type);
+
     for (const action of audioActions) {
         if (type === action.requestKey) {
             const handler = self[action.actionKey as keyof Window];
