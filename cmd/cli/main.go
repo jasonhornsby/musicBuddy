@@ -29,7 +29,6 @@ func main() {
 	fmt.Println("Registering parsers")
 	parserList := []parsers.Parser{
 		&parsers.PlotParser{SamplesPerPoint: 500},
-		&parsers.SpectralFluxParser{WindowSize: 1024, HopSize: 512},
 	}
 
 	for _, parser := range parserList {

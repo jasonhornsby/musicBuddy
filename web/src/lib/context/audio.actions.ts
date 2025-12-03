@@ -14,7 +14,7 @@ class AudioAction<T, R> {
     }
 }
 
-export const LoadAudioAction = AudioAction.create<[number, number][], void>('loadAudio', 'loadAudio');
+export const LoadAudioAction = AudioAction.create<Float64Array, void>('loadAudio', 'loadAudio');
 export const UnloadAudioAction = AudioAction.create('unloadAudio', 'unloadAudio');
 
 export type AudioMetadata = {
@@ -32,8 +32,11 @@ export type AudioMetadata = {
 }
 export const GetAudioMetadataAction = AudioAction.create<void, AudioMetadata>('getAudioMetadata', 'getAudioMetadata');
 
+export const GetSpectralFluxAction = AudioAction.create<void, Float64Array>('getSpectralFlux', 'getSpectralFlux');
+
 export const audioActions = [
     LoadAudioAction,
     UnloadAudioAction,
     GetAudioMetadataAction,
+    GetSpectralFluxAction,
 ] as const;

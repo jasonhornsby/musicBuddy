@@ -132,6 +132,34 @@ func getAudioMetadata(this js.Value, args []js.Value) interface{} {
 	}
 }
 
+func getSpectralFlux(this js.Value, args []js.Value) interface{} {
+	if !isInitialized {
+		return js.ValueOf(false)
+	}
+
+	parser := &parsers.SpectralFluxParser{
+		WindowSize: 1024,
+		HopSize:    512,
+	}
+
+	spectralFlux, err := parser.Parse(audioData)
+	if err != nil {
+		println("Error getting spectral flux: ", err)
+		return js.ValueOf(false)
+	}
+
+	// Bulk copy to JS using unsafe slice conversion
+	byteLength := len(spectralFlux) * 8 // 8 bytes per float64
+	bytesSlice := unsafe.Slice((*byte)(unsafe.Pointer(&spectralFlux[0])), byteLength)
+
+	// Create Uint8Array and bulk copy all bytes at once
+	uint8Array := js.Global().Get("Uint8Array").New(byteLength)
+	js.CopyBytesToJS(uint8Array, bytesSlice)
+
+	// Create Float64Array view over the same buffer (no additional copy)
+	return js.Global().Get("Float64Array").New(uint8Array.Get("buffer"))
+}
+
 func main() {
 	c := make(chan struct{}, 0)
 
@@ -141,6 +169,8 @@ func main() {
 
 	// Audio metadata functions
 	js.Global().Set("getAudioMetadata", js.FuncOf(getAudioMetadata))
+	// Spectral flux functions
+	js.Global().Set("getSpectralFlux", js.FuncOf(getSpectralFlux))
 
 	<-c
 }

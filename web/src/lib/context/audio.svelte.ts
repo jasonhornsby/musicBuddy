@@ -1,6 +1,6 @@
 import { getContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
-import { audioActions, GetAudioMetadataAction, LoadAudioAction, UnloadAudioAction, type AudioMetadata } from "./audio.actions";
+import { audioActions, GetAudioMetadataAction, GetSpectralFluxAction, LoadAudioAction, UnloadAudioAction, type AudioMetadata } from "./audio.actions";
 
 export class AudioContext {
     private _worker: Worker | null = null;
@@ -12,6 +12,7 @@ export class AudioContext {
     private _audioLoaded = $state(false);
     // Data
     private _decoded = $state<Float64Array | null>(null);
+    private _spectralFlux = $state<Float64Array | null>(null);
 
     // Insights
     private _metadata = $state<AudioMetadata | null>(null);
@@ -35,6 +36,10 @@ export class AudioContext {
 
     get metadata() {
         return this._metadata;
+    }
+
+    get spectralFlux() {
+        return this._spectralFlux;
     }
 
     async initWorker() {
@@ -129,6 +134,16 @@ export class AudioContext {
         }
 
         this._audioLoaded = false;
+    }
+
+    async getSpectralFlux() {
+        if (this._spectralFlux) return;
+        const result = await this.sendMessage<Float64Array | null>(GetSpectralFluxAction.requestKey);
+        if (!result) {
+            toast.error("Failed to get spectral flux", { description: "Please try again" })
+            return;
+        }
+        this._spectralFlux = result;
     }
 }
 

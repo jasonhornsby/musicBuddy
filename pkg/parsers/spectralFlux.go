@@ -2,16 +2,11 @@ package parsers
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"math/cmplx"
 
 	"github.com/mjibson/go-dsp/fft"
 	"github.com/mjibson/go-dsp/window"
-	"gonum.org/v1/plot"
-	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/plotutil"
-	"gonum.org/v1/plot/vg"
 )
 
 type SpectralFluxParser struct {
@@ -23,7 +18,7 @@ func (sfp *SpectralFluxParser) Name() string {
 	return "Spectral Flux Parser"
 }
 
-func (sfp *SpectralFluxParser) Parse(data *AudioData) error {
+func (sfp *SpectralFluxParser) Parse(data *AudioData) ([]float64, error) {
 	samples := make([]float64, data.Samples.Len())
 	streamer := data.Samples.Streamer(0, data.Samples.Len())
 
@@ -76,35 +71,7 @@ func (sfp *SpectralFluxParser) Parse(data *AudioData) error {
 		previousSpectrum = currSpectrum
 	}
 
-	p := plot.New()
-	p.Title.Text = "Spectral Flux"
-	p.X.Label.Text = "Time (seconds)"
-	p.Y.Label.Text = "Flux"
-
-	smoothedSpectralFlux := smooth(spectralFlux, 10)
-	points := make(plotter.XYs, len(smoothedSpectralFlux))
-	for i, flux := range smoothedSpectralFlux {
-		timeInSeconds := float64(i*sfp.HopSize) / float64(data.Format.SampleRate)
-		points[i] = plotter.XY{X: timeInSeconds, Y: flux}
-	}
-
-	err := plotutil.AddLinePoints(p, "Spectral Flux", points)
-	if err != nil {
-		return err
-	}
-
-	err = p.Save(15*vg.Inch, 10*vg.Inch, "../../output/spectral_flux.png")
-	if err != nil {
-		return err
-	}
-
-	estimatedBPM, err := EstimateBPM(spectralFlux, int(data.Format.SampleRate), sfp.HopSize)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Estimated BPM: %f\n", estimatedBPM)
-
-	return nil
+	return smooth(spectralFlux, 50), nil
 }
 
 func smooth(input []float64, window int) []float64 {
