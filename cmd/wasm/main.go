@@ -5,10 +5,14 @@ package main
 import (
 	"bytes"
 	"io"
+	"parse_audio/pkg/parsers"
 	"syscall/js"
 
+	"github.com/gopxl/beep"
 	"github.com/gopxl/beep/mp3"
 )
+
+var audioData *parsers.AudioData
 
 func loadAudio(this js.Value, args []js.Value) interface{} {
 	println("Received audio data")
@@ -22,14 +26,20 @@ func loadAudio(this js.Value, args []js.Value) interface{} {
 	reader := bytes.NewReader(data)
 	readCloser := io.NopCloser(reader)
 
-	_, format, err := mp3.Decode(readCloser)
+	streamer, format, err := mp3.Decode(readCloser)
 	if err != nil {
 		println("Error decoding audio: ", err)
 		return false
 	}
 
-	println("Format: ", format.SampleRate, format.NumChannels, format.Precision)
+	buffer := beep.NewBuffer(format)
+	buffer.Append(streamer)
 
+	audioData = &parsers.AudioData{
+		Samples: buffer,
+		Format:  format,
+	}
+	println("Finished loading audio")
 	return true
 }
 

@@ -3,22 +3,11 @@ package parsers
 import (
 	"fmt"
 
-	"github.com/gopxl/beep"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
 )
-
-// AudioData holds the decoded audio samples and format information
-type AudioData struct {
-	Samples *beep.Buffer
-	Format  beep.Format
-}
-
-func (a AudioData) String() string {
-	return fmt.Sprintf("AudioData{Samples: %v, Format: %v}", a.Samples.Len(), a.Format)
-}
 
 // Parser is the interface that all audio parsers must implement
 type Parser interface {
