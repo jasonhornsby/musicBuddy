@@ -17,53 +17,70 @@
       muted: '#f4f4f6',               // oklch(0.968 0.007 247.896) - muted bg
       mutedForeground: '#6b6680',     // oklch(0.554 0.046 257.417)
       border: '#e5e4e9',              // oklch(0.929 0.013 255.508)
-      chart1: '#d97341',              // oklch(0.646 0.222 41.116) - orange
-      chart1Alpha: 'rgba(217, 115, 65, 0.25)'
+      chart1: '#d97341',              // oklch(0.646 0.222 41.116) - orange (left channel)
+      chart1Alpha: 'rgba(217, 115, 65, 0.25)',
+      chart2: '#4171d9',              // Blue (right channel)
+      chart2Alpha: 'rgba(65, 113, 217, 0.25)'
     };
     
     // Downsample using min-max method for waveform display
-    function downsampleMinMax(float64Array: Float64Array, startIdx: number, endIdx: number, targetPoints: number) {
-      if (!float64Array || float64Array.length === 0) return [];
+    // Float64Array contains interleaved stereo data: [L0, R0, L1, R1, L2, R2, ...]
+    // startIdx and endIdx are sample indices (not array indices)
+    function downsampleMinMax(float64Array: Float64Array, startSample: number, endSample: number, targetPoints: number) {
+      if (!float64Array || float64Array.length === 0) return { left: [], right: [] };
       
-      const dataLength = endIdx - startIdx;
-      const blockSize = Math.max(1, Math.floor(dataLength / targetPoints));
-      const downsampled = [];
+      const numSamples = endSample - startSample;
+      const blockSize = Math.max(1, Math.floor(numSamples / targetPoints));
+      const leftChannel: [number, number][] = [];
+      const rightChannel: [number, number][] = [];
       
       for (let i = 0; i < targetPoints; i++) {
-        const start = startIdx + (i * blockSize);
-        const end = Math.min(start + blockSize, endIdx);
+        const blockStart = startSample + (i * blockSize);
+        const blockEnd = Math.min(blockStart + blockSize, endSample);
         
-        if (start >= endIdx) break;
+        if (blockStart >= endSample) break;
         
-        let min = Infinity;
-        let max = -Infinity;
+        let leftMin = Infinity;
+        let leftMax = -Infinity;
+        let rightMin = Infinity;
+        let rightMax = -Infinity;
         
-        for (let j = start; j < end; j++) {
-          if (float64Array[j] < min) min = float64Array[j];
-          if (float64Array[j] > max) max = float64Array[j];
+        for (let sampleIdx = blockStart; sampleIdx < blockEnd; sampleIdx++) {
+          // Each sample has 2 values: left at even index, right at odd index
+          const arrayIdx = sampleIdx * 2;
+          const leftVal = float64Array[arrayIdx];
+          const rightVal = float64Array[arrayIdx + 1];
+          
+          if (leftVal < leftMin) leftMin = leftVal;
+          if (leftVal > leftMax) leftMax = leftVal;
+          if (rightVal < rightMin) rightMin = rightVal;
+          if (rightVal > rightMax) rightMax = rightVal;
         }
         
         // Create two points for min and max to visualize the envelope
-        downsampled.push([start, max]);
-        downsampled.push([start, min]);
+        leftChannel.push([blockStart, leftMax]);
+        leftChannel.push([blockStart, leftMin]);
+        rightChannel.push([blockStart, rightMax]);
+        rightChannel.push([blockStart, rightMin]);
       }
       
-      return downsampled;
+      return { left: leftChannel, right: rightChannel };
     }
     
     function getDataForZoom(start: number, end: number) {
-      if (!audioContext.decoded) return [];
+      if (!audioContext.decoded) return { left: [], right: [] };
       
-      const totalLength = audioContext.decoded.length;
-      const startIdx = Math.floor((start / 100) * totalLength);
-      const endIdx = Math.ceil((end / 100) * totalLength);
-      const visibleRange = endIdx - startIdx;
+      // Total number of stereo samples (array length / 2 since interleaved)
+      const totalSamples = audioContext.decoded.length / 2;
+      const startSample = Math.floor((start / 100) * totalSamples);
+      const endSample = Math.ceil((end / 100) * totalSamples);
+      const visibleSamples = endSample - startSample;
       
       // Adjust target points based on zoom level
       // More zoomed in = more detail
-      const targetPoints = Math.min(visibleRange, 500);
+      const targetPoints = Math.min(visibleSamples, 500);
       
-      return downsampleMinMax(audioContext.decoded, startIdx, endIdx, targetPoints);
+      return downsampleMinMax(audioContext.decoded, startSample, endSample, targetPoints);
     }
     
     function initChart() {
@@ -76,10 +93,15 @@
       
       const option = {
         backgroundColor: colors.background,
+        legend: {
+          show: true,
+          top: 5,
+          textStyle: { color: colors.mutedForeground }
+        },
         grid: {
           left: 50,
           right: 50,
-          top: 30,
+          top: 35,
           bottom: 80
         },
         tooltip: {
@@ -90,9 +112,16 @@
             color: colors.foreground
           },
           formatter: (params: any) => {
+            if (!params || params.length === 0) return '';
             const sample = params[0].data[0];
-            const amplitude = params[0].data[1].toFixed(4);
-            return `Sample: ${sample}<br/>Amplitude: ${amplitude}`;
+            let result = `Sample: ${sample}`;
+            for (const param of params) {
+              const channelName = param.seriesName;
+              const amplitude = param.data[1].toFixed(4);
+              const color = param.color;
+              result += `<br/><span style="color:${color}">●</span> ${channelName}: ${amplitude}`;
+            }
+            return result;
           }
         },
         xAxis: {
@@ -152,8 +181,9 @@
         ],
         series: [
           {
+            name: 'Left Channel',
             type: 'line',
-            data: getDataForZoom(0, 100),
+            data: getDataForZoom(0, 100).left,
             showSymbol: false,
             lineStyle: {
               color: colors.chart1,
@@ -161,6 +191,22 @@
             },
             areaStyle: {
               color: colors.chart1Alpha
+            },
+            sampling: 'lttb',
+            large: true,
+            largeThreshold: 1000
+          },
+          {
+            name: 'Right Channel',
+            type: 'line',
+            data: getDataForZoom(0, 100).right,
+            showSymbol: false,
+            lineStyle: {
+              color: colors.chart2,
+              width: 1
+            },
+            areaStyle: {
+              color: colors.chart2Alpha
             },
             sampling: 'lttb',
             large: true,
@@ -175,9 +221,11 @@
       chart.on('dataZoom', (params) => {
         if (!chart) return;
         const option = chart.getOption() as echarts.EChartsOption;
-        const dataZoom = option.dataZoom[0] as any;
-        const start = dataZoom.start;
-        const end = dataZoom.end;
+        const dataZoomArr = option.dataZoom as echarts.DataZoomComponentOption[] | undefined;
+        if (!dataZoomArr || dataZoomArr.length === 0) return;
+        const dataZoom = dataZoomArr[0] as { start?: number; end?: number };
+        const start = dataZoom.start ?? 0;
+        const end = dataZoom.end ?? 100;
         
         // Only update if zoom changed significantly (avoid excessive updates)
         if (Math.abs(start - currentZoom.start) > 0.5 || 
@@ -187,7 +235,10 @@
           const newData = getDataForZoom(start, end);
           
           chart.setOption({
-            series: [{ data: newData }]
+            series: [
+              { data: newData.left },
+              { data: newData.right }
+            ]
           });
         }
       });
