@@ -22,7 +22,7 @@
 	let selectedView = $state<View>(views[0]);
 </script>
 
-<div class="flex flex-col h-full">
+<div class="flex flex-col h-dvh">
 	<header class="px-5 py-4 flex items-center justify-between">
 		<h2 class="text-sm font-medium tracking-wide uppercase text-muted-foreground">
 			{selectedView.name}
@@ -53,7 +53,7 @@
 
 	<Separator />
 
-	<main class="flex-1 overflow-hidden">
+	<main class="flex-1 overflow-hidden bg-green-50">
 		{#if selectedView.id === 'general'}
 			<GeneralPanel />
 		{:else if selectedView.id === 'waveform'}

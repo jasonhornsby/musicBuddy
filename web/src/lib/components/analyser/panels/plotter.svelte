@@ -5,9 +5,21 @@
     
     const audioContext = getAudioContext();
     
-    let chartContainer = $state();
+    let chartContainer = $state<HTMLElement | undefined>();
     let chart = $state<echarts.ECharts | null>(null);
     let currentZoom = $state({ start: 0, end: 100 });
+    
+    // Theme colors matching project palette (light mode)
+    const colors = {
+      background: '#ffffff',
+      foreground: '#1a1625',          // oklch(0.129 0.042 264.695) - dark purple
+      primary: '#1f1a2e',             // oklch(0.208 0.042 265.755) - primary
+      muted: '#f4f4f6',               // oklch(0.968 0.007 247.896) - muted bg
+      mutedForeground: '#6b6680',     // oklch(0.554 0.046 257.417)
+      border: '#e5e4e9',              // oklch(0.929 0.013 255.508)
+      chart1: '#d97341',              // oklch(0.646 0.222 41.116) - orange
+      chart1Alpha: 'rgba(217, 115, 65, 0.25)'
+    };
     
     // Downsample using min-max method for waveform display
     function downsampleMinMax(float64Array: Float64Array, startIdx: number, endIdx: number, targetPoints: number) {
@@ -41,7 +53,6 @@
     
     function getDataForZoom(start: number, end: number) {
       if (!audioContext.decoded) return [];
-      console.log('start, end', start, end)
       
       const totalLength = audioContext.decoded.length;
       const startIdx = Math.floor((start / 100) * totalLength);
@@ -64,7 +75,7 @@
 
       
       const option = {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: colors.background,
         grid: {
           left: 50,
           right: 50,
@@ -73,6 +84,11 @@
         },
         tooltip: {
           trigger: 'axis',
+          backgroundColor: colors.background,
+          borderColor: colors.border,
+          textStyle: {
+            color: colors.foreground
+          },
           formatter: (params: any) => {
             const sample = params[0].data[0];
             const amplitude = params[0].data[1].toFixed(4);
@@ -84,7 +100,9 @@
           name: 'Sample',
           nameLocation: 'center',
           nameGap: 30,
-          axisLine: { lineStyle: { color: '#4b5563' } },
+          nameTextStyle: { color: colors.mutedForeground },
+          axisLine: { lineStyle: { color: colors.border } },
+          axisLabel: { color: colors.mutedForeground },
           splitLine: { show: false }
         },
         yAxis: {
@@ -92,10 +110,12 @@
           name: 'Amplitude',
           nameLocation: 'center',
           nameGap: 40,
+          nameTextStyle: { color: colors.mutedForeground },
           min: -1,
           max: 1,
-          axisLine: { lineStyle: { color: '#4b5563' } },
-          splitLine: { lineStyle: { color: '#374151' } }
+          axisLine: { lineStyle: { color: colors.border } },
+          axisLabel: { color: colors.mutedForeground },
+          splitLine: { lineStyle: { color: colors.muted } }
         },
         dataZoom: [
           {
@@ -111,13 +131,22 @@
             end: 100,
             height: 30,
             bottom: 10,
-            borderColor: '#4b5563',
-            fillerColor: 'rgba(59, 130, 246, 0.2)',
+            borderColor: colors.border,
+            fillerColor: colors.chart1Alpha,
             handleStyle: {
-              color: '#3b82f6'
+              color: colors.chart1,
+              borderColor: colors.chart1
             },
             textStyle: {
-              color: '#9ca3af'
+              color: colors.mutedForeground
+            },
+            dataBackground: {
+              lineStyle: { color: colors.border },
+              areaStyle: { color: colors.muted }
+            },
+            selectedDataBackground: {
+              lineStyle: { color: colors.chart1 },
+              areaStyle: { color: colors.chart1Alpha }
             }
           }
         ],
@@ -127,11 +156,11 @@
             data: getDataForZoom(0, 100),
             showSymbol: false,
             lineStyle: {
-              color: '#3b82f6',
+              color: colors.chart1,
               width: 1
             },
             areaStyle: {
-              color: 'rgba(59, 130, 246, 0.3)'
+              color: colors.chart1Alpha
             },
             sampling: 'lttb',
             large: true,
@@ -190,8 +219,10 @@
 <style>
     .waveform-container {
       width: 100%;
-      height: 400px;
-      background: #1a1a1a;
-      border-radius: 8px;
+      height: 100%;
+      min-height: 0;
+      background: var(--background);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
     }
 </style>
