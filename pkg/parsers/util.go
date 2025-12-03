@@ -9,6 +9,7 @@ import (
 // AudioData holds the decoded audio samples and format information
 type AudioData struct {
 	Samples *beep.Buffer
+	RawData []byte
 	Format  beep.Format
 }
 

@@ -4,7 +4,7 @@
 	import * as Item from '$lib/components/ui/item';
 	import { ChevronDown, RotateCcw } from 'lucide-svelte';
 	import { getAudioContext } from '$lib/context/audio.svelte';
-	import { GeneralPanel } from './panels';
+	import { GeneralPanel, WaveformPanel } from './panels';
 
 	type View = {
 		id: string;
@@ -29,6 +29,8 @@
 		<main>
 			{#if selectedView.id === 'general'}
 				<GeneralPanel />
+			{:else if selectedView.id === 'waveform'}
+				<WaveformPanel />
 			{/if}
 		</main>
 	</div>

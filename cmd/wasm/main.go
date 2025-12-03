@@ -15,7 +15,6 @@ import (
 )
 
 var isInitialized = false
-var rawData []byte
 var audioData *parsers.AudioData
 
 func loadAudio(this js.Value, args []js.Value) interface{} {
@@ -24,12 +23,12 @@ func loadAudio(this js.Value, args []js.Value) interface{} {
 	jsUint8Array := args[0]
 	length := jsUint8Array.Length()
 
-	rawData = make([]byte, length)
+	data := make([]byte, length)
 
-	js.CopyBytesToGo(rawData, jsUint8Array)
+	js.CopyBytesToGo(data, jsUint8Array)
 	println("Time taken to copy bytes to go: ", formatSeconds(time.Since(start).Seconds()))
 
-	reader := bytes.NewReader(rawData)
+	reader := bytes.NewReader(data)
 	readCloser := io.NopCloser(reader)
 
 	println("Time taken to create reader: ", formatSeconds(time.Since(start).Seconds()))
@@ -57,6 +56,7 @@ func loadAudio(this js.Value, args []js.Value) interface{} {
 	audioData = &parsers.AudioData{
 		Samples: buffer,
 		Format:  format,
+		RawData: data,
 	}
 
 	isInitialized = true
@@ -86,17 +86,25 @@ func getAudioMetadata(this js.Value, args []js.Value) interface{} {
 		return js.ValueOf(false)
 	}
 
-	metadata := parsers.GetAudioMetadata(audioData)
+	metadata, err := parsers.GetAudioMetadata(audioData)
 
-	println("Audio metadata: ", metadata)
-
-	println("Returning audio metadata")
+	if err != nil {
+		println("Error getting audio metadata: ", err)
+		return js.ValueOf(false)
+	}
 
 	return map[string]interface{}{
 		"sampleRate":     metadata.SampleRate,
 		"channels":       metadata.Channels,
 		"durationMs":     metadata.DurationMs,
 		"decodedBitrate": metadata.DecodedBitrate,
+		"metadata": map[string]interface{}{
+			"name":   metadata.Metadata.Name,
+			"artist": metadata.Metadata.Artist,
+			"album":  metadata.Metadata.Album,
+			"year":   metadata.Metadata.Year,
+			"format": metadata.Metadata.Format,
+		},
 	}
 }
 

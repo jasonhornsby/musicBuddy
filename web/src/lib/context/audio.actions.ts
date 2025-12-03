@@ -22,6 +22,13 @@ export type AudioMetadata = {
     channels: number;
     durationMs: number;
     decodedBitrate: number;
+    metadata: {
+        name: string;
+        artist: string;
+        album: string;
+        year: number;
+        format: string;
+    };
 }
 export const GetAudioMetadataAction = AudioAction.create<void, AudioMetadata>('getAudioMetadata', 'getAudioMetadata');
 
