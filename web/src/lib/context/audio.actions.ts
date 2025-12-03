@@ -14,7 +14,7 @@ class AudioAction<T, R> {
     }
 }
 
-export const LoadAudioAction = AudioAction.create('loadAudio', 'loadAudio');
+export const LoadAudioAction = AudioAction.create<[number, number][], void>('loadAudio', 'loadAudio');
 export const UnloadAudioAction = AudioAction.create('unloadAudio', 'unloadAudio');
 
 export type AudioMetadata = {

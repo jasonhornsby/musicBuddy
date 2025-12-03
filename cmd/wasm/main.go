@@ -9,6 +9,7 @@ import (
 	"parse_audio/pkg/parsers"
 	"syscall/js"
 	"time"
+	"unsafe"
 
 	"github.com/gopxl/beep"
 	"github.com/gopxl/beep/mp3"
@@ -61,7 +62,30 @@ func loadAudio(this js.Value, args []js.Value) interface{} {
 
 	isInitialized = true
 	println("Time taken to load audio: ", formatSeconds(time.Since(start).Seconds()))
-	return true
+
+	// Extract samples from buffer
+	numSamples := buffer.Len()
+	sampleStreamer := buffer.Streamer(0, numSamples)
+	samples := make([][2]float64, numSamples)
+	n, ok := sampleStreamer.Stream(samples)
+	if !ok || n != numSamples {
+		println("Error streaming samples, got ", n, " expected ", numSamples)
+		return js.ValueOf(false)
+	}
+
+	// Bulk copy samples to JS using unsafe slice conversion
+	byteLength := numSamples * 16 // 2 channels * 8 bytes per float64
+	bytesSlice := unsafe.Slice((*byte)(unsafe.Pointer(&samples[0])), byteLength)
+
+	// Create Uint8Array and bulk copy all bytes at once
+	samplesUint8Array := js.Global().Get("Uint8Array").New(byteLength)
+	js.CopyBytesToJS(samplesUint8Array, bytesSlice)
+
+	// Create Float64Array view over the same buffer (no additional copy)
+	jsFloat64Array := js.Global().Get("Float64Array").New(samplesUint8Array.Get("buffer"))
+
+	println("Time taken to create samples array: ", formatSeconds(time.Since(start).Seconds()))
+	return jsFloat64Array
 }
 
 // formatSeconds prints seconds with up to 3 decimal places and no scientific notation.

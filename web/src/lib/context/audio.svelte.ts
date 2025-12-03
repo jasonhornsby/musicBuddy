@@ -10,9 +10,16 @@ export class AudioContext {
 
     private _parsingAudio = $state(false);
     private _audioLoaded = $state(false);
+    // Data
+    private _decoded = $state<Float64Array | null>(null);
 
     // Insights
     private _metadata = $state<AudioMetadata | null>(null);
+
+
+    get decoded() {
+        return this._decoded;
+    }
 
     get isWorkerReady() {
         return this._isWorkerReady;
@@ -102,12 +109,13 @@ export class AudioContext {
     private async loadAudioFromArrayBuffer(arrayBuffer: ArrayBuffer) {
         const uint8Array = new Uint8Array(arrayBuffer);
 
-        const success = await this.sendMessage<boolean>(LoadAudioAction.requestKey, uint8Array);
-        if (!success) {
+        const result = await this.sendMessage<Float64Array | null>(LoadAudioAction.requestKey, uint8Array);
+        if (!result) {
             toast.error("Failed to parse audio", { description: "Are you sure this is a mp3 file?" })
             this._parsingAudio = false;
             return;
         }
+        this._decoded = result;
 
         this._parsingAudio = false;
         this._audioLoaded = true;

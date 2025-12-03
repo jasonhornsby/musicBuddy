@@ -48,6 +48,7 @@
 		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
+		"echarts": "^6.0.0",
 		"lucide-svelte": "^0.555.0"
 	}
 }

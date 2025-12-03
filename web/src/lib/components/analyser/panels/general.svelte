@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { getAudioContext } from "$lib/context/audio.svelte";
 	import { Spinner } from "$lib/components/ui/spinner";
-	import { Separator } from "$lib/components/ui/separator";
 	import * as Card from "$lib/components/ui/card";
 	import { onMount } from "svelte";
 
@@ -35,12 +34,6 @@
 </script>
 
 <div class="flex flex-col h-full">
-	<header class="px-5 py-4 flex items-center justify-between">
-		<h2 class="text-sm font-medium tracking-wide uppercase text-muted-foreground">Overview</h2>
-	</header>
-
-	<Separator />
-
 	<div class="flex-1 p-5 space-y-5 overflow-y-auto">
 		{#if audioContext.metadata}
 			<!-- Track Metadata Card -->
