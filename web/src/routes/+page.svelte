@@ -7,14 +7,15 @@
 	import { Analyser } from '$lib/components/analyser';
 	import * as Card from '$lib/components/ui/card';
 	import { Music, CloudUpload, PlayCircle } from 'lucide-svelte';
+	import { getAudioContext, setAudioContext } from '$lib/context/audio.svelte.js';
 
 	const { data } = $props();
 
 	let isWasmLoaded = $state(false);
-	let loadingAudio = $state(false);
-	let audioLoaded = $state(false);
 	let uploadFileInput = $state<HTMLInputElement | null>(null);
 	let isDragging = $state(false);
+
+    const audioContext = setAudioContext();
 
 	onMount(async () => {
 		const go = new window.Go();
@@ -26,30 +27,15 @@
 	});
 
 	async function handleFileChange(event: Event) {
-		loadingAudio = true;
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
 
-		try {
-			const arrayBuffer = await file.arrayBuffer();
-			const uint8Array = new Uint8Array(arrayBuffer);
-			await window.loadAudio(uint8Array);
-		} catch (e) {
-			console.error('Error loading audio: ', e);
-		}
-		loadingAudio = false;
-		audioLoaded = true;
+		audioContext.loadAudio(file);
 	}
 
 	async function loadDemoFile(demoFile: DemoFile) {
-		loadingAudio = true;
-		const response = await fetch(demoFile.src);
-		const arrayBuffer = await response.arrayBuffer();
-		const uint8Array = new Uint8Array(arrayBuffer);
-		await window.loadAudio(uint8Array);
-		loadingAudio = false;
-		audioLoaded = true;
+		audioContext.loadAudioFromSrc(demoFile.src);
 	}
 
 	function handleDrop(event: DragEvent) {
@@ -61,9 +47,13 @@
 			handleFileChange(fakeEvent);
 		}
 	}
+
+    $inspect(audioContext.audioLoaded);
+    $inspect(audioContext.parsingAudio);
+    $inspect(isWasmLoaded);
 </script>
 
-{#if !audioLoaded}
+{#if !audioContext.audioLoaded}
 	<div
 		class="min-h-screen w-full flex items-center justify-center p-6 bg-linear-to-br from-background via-background to-muted/30"
 	>
@@ -81,7 +71,7 @@
 			</Card.Header>
 
 			<Card.Content class="flex flex-col gap-6">
-				{#if loadingAudio || !isWasmLoaded}
+				{#if audioContext.parsingAudio || !isWasmLoaded}
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<Spinner class="size-8 text-primary" />
 						<span class="text-sm text-muted-foreground font-medium">

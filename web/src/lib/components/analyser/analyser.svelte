@@ -3,6 +3,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Item from '$lib/components/ui/item';
 	import { ChevronDown, RotateCcw } from 'lucide-svelte';
+	import { getAudioContext } from '$lib/context/audio.svelte';
 
 	type View = {
 		id: string;
@@ -18,6 +19,8 @@
 	];
 
 	let selectedView = $state<View>(views[0]);
+
+    const audioContext = getAudioContext();
 </script>
 
 <Sidebar.Provider>
@@ -57,7 +60,9 @@
 		<Sidebar.Footer>
 			<Sidebar.Menu>
 				<Sidebar.MenuItem>
-					<Sidebar.MenuButton><RotateCcw class="size-4" />Reset file</Sidebar.MenuButton>
+					<Sidebar.MenuButton onclick={() => audioContext.resetAudio()}>
+						<RotateCcw class="size-4" />Reset file</Sidebar.MenuButton
+					>
 				</Sidebar.MenuItem>
 			</Sidebar.Menu>
 		</Sidebar.Footer>

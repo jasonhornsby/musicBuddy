@@ -13,7 +13,11 @@ export const getDemoFiles = query(async (): Promise<DemoFile[]> => {
         },
         {
             name: "Hip Hop",
-            src: "examples/hip-hop.mp3"
+            src: "examples/hiphop.mp3"
+        },
+        {
+            name: "Error",
+            src: "examples/error.mp3"
         }
     ]
 })

@@ -25,12 +25,12 @@ func loadAudio(this js.Value, args []js.Value) interface{} {
 	_, format, err := mp3.Decode(readCloser)
 	if err != nil {
 		println("Error decoding audio: ", err)
-		return nil
+		return false
 	}
 
 	println("Format: ", format.SampleRate, format.NumChannels, format.Precision)
 
-	return nil
+	return true
 }
 
 func main() {
