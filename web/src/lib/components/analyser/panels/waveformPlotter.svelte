@@ -78,7 +78,7 @@
       
       // Adjust target points based on zoom level
       // More zoomed in = more detail
-      const targetPoints = Math.min(visibleSamples, 500);
+      const targetPoints = Math.min(visibleSamples, 700);
       
       return downsampleMinMax(audioContext.decoded, startSample, endSample, targetPoints);
     }
@@ -90,6 +90,8 @@
 
       if (!chart) return;
 
+      // Total number of stereo samples - used for fixed axis bounds
+      const totalSamples = audioContext.decoded.length / 2;
       
       const option = {
         backgroundColor: colors.background,
@@ -132,7 +134,9 @@
           nameTextStyle: { color: colors.mutedForeground },
           axisLine: { lineStyle: { color: colors.border } },
           axisLabel: { color: colors.mutedForeground },
-          splitLine: { show: false }
+          splitLine: { show: false },
+          min: 0,
+          max: totalSamples
         },
         yAxis: {
           type: 'value',

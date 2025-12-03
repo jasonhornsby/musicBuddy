@@ -53,7 +53,7 @@
 
 	<Separator />
 
-	<main class="flex-1 overflow-hidden bg-green-50">
+	<main class="flex-1 overflow-hidden">
 		{#if selectedView.id === 'general'}
 			<GeneralPanel />
 		{:else if selectedView.id === 'waveform'}
