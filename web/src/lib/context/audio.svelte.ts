@@ -1,5 +1,6 @@
 import { getContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
+import { audioActions, LoadAudioAction, UnloadAudioAction } from "./audio.actions";
 
 export class AudioContext {
     private _worker: Worker | null = null;
@@ -32,27 +33,19 @@ export class AudioContext {
 
         this._worker.onmessage = (event) => {
             const { type, payload, id } = event.data;
-            switch (type) {
-                case 'ready':
-                    this._isWorkerReady = true;
-                    break;
-                case 'loadAudioResult':
+            if (type === 'ready') {
+                this._isWorkerReady = true;
+                return;
+            }
+            for (const action of audioActions) {
+                if (type === action.responseKey) {
                     const resolve = this._pendingRequests.get(id);
                     if (resolve) {
                         resolve(payload);
                         this._pendingRequests.delete(id);
                     }
                     break;
-                case 'unloadAudioResult':
-                    const unloadResolve = this._pendingRequests.get(id);
-                    if (unloadResolve) {
-                        unloadResolve(payload);
-                        this._pendingRequests.delete(id);
-                    }
-                    break;
-                default:
-                    console.error('Unknown message type:', type);
-                    break;
+                }
             }
         }
     }
@@ -95,7 +88,7 @@ export class AudioContext {
     private async loadAudioFromArrayBuffer(arrayBuffer: ArrayBuffer) {
         const uint8Array = new Uint8Array(arrayBuffer);
 
-        const success = await this.sendMessage<boolean>('loadAudio', uint8Array);
+        const success = await this.sendMessage<boolean>(LoadAudioAction.requestKey, uint8Array);
         if (!success) {
             toast.error("Failed to parse audio", { description: "Are you sure this is a mp3 file?" })
             this._parsingAudio = false;
@@ -107,7 +100,7 @@ export class AudioContext {
     }
 
     async resetAudio() {
-        const success = await this.sendMessage<boolean>('unloadAudio');
+        const success = await this.sendMessage<boolean>(UnloadAudioAction.requestKey);
         if (!success) {
             toast.error("Failed to unload audio", { description: "Please try again" })
             return;
