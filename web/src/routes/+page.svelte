@@ -7,23 +7,17 @@
 	import { Analyser } from '$lib/components/analyser';
 	import * as Card from '$lib/components/ui/card';
 	import { Music, CloudUpload, PlayCircle } from 'lucide-svelte';
-	import { getAudioContext, setAudioContext } from '$lib/context/audio.svelte.js';
+	import { setAudioContext } from '$lib/context/audio.svelte.js';
 
 	const { data } = $props();
 
-	let isWasmLoaded = $state(false);
 	let uploadFileInput = $state<HTMLInputElement | null>(null);
 	let isDragging = $state(false);
 
     const audioContext = setAudioContext();
 
 	onMount(async () => {
-		const go = new window.Go();
-		const response = await fetch('/main.wasm');
-		const buffer = await response.arrayBuffer();
-		const { instance } = await WebAssembly.instantiate(buffer, go.importObject);
-		go.run(instance);
-		isWasmLoaded = true;
+		audioContext.initWorker();
 	});
 
 	async function handleFileChange(event: Event) {
@@ -50,7 +44,6 @@
 
     $inspect(audioContext.audioLoaded);
     $inspect(audioContext.parsingAudio);
-    $inspect(isWasmLoaded);
 </script>
 
 {#if !audioContext.audioLoaded}
@@ -71,11 +64,11 @@
 			</Card.Header>
 
 			<Card.Content class="flex flex-col gap-6">
-				{#if audioContext.parsingAudio || !isWasmLoaded}
+				{#if audioContext.parsingAudio || !audioContext.isWorkerReady}
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<Spinner class="size-8 text-primary" />
 						<span class="text-sm text-muted-foreground font-medium">
-							{!isWasmLoaded ? 'Initializing...' : 'Processing audio...'}
+							{!audioContext.isWorkerReady ? 'Initializing...' : 'Processing audio...'}
 						</span>
 					</div>
 				{:else}

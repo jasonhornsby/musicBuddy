@@ -12,6 +12,7 @@ import (
 	"github.com/gopxl/beep/mp3"
 )
 
+var isInitialized = false
 var audioData *parsers.AudioData
 
 func loadAudio(this js.Value, args []js.Value) interface{} {
@@ -39,16 +40,40 @@ func loadAudio(this js.Value, args []js.Value) interface{} {
 		Samples: buffer,
 		Format:  format,
 	}
-	println("Finished loading audio")
+	isInitialized = true
 	return true
+}
+
+func unloadAudio(this js.Value, args []js.Value) interface{} {
+	if !isInitialized {
+		return js.ValueOf(false)
+	}
+
+	audioData = nil
+	isInitialized = false
+	println("Unloaded audio", audioData, isInitialized)
+	return js.ValueOf(true)
+}
+
+func getAudioMetadata(this js.Value, args []js.Value) interface{} {
+	if !isInitialized {
+		return js.ValueOf(false)
+	}
+
+	println("Returning audio metadata")
+
+	return js.ValueOf(true)
 }
 
 func main() {
 	c := make(chan struct{}, 0)
 
+	// Prep functions
 	js.Global().Set("loadAudio", js.FuncOf(loadAudio))
+	js.Global().Set("unloadAudio", js.FuncOf(unloadAudio))
 
-	println("WASM module initialized")
+	// Audio metadata functions
+	js.Global().Set("getAudioMetadata", js.FuncOf(getAudioMetadata))
 
 	<-c
 }
