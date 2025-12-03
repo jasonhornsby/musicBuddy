@@ -81,6 +81,7 @@ export class AudioContext {
     async getAudioMetadata() {
         console.log("Getting audio metadata");
         const result = await this.sendMessage<AudioMetadata>(GetAudioMetadataAction.requestKey);
+        console.log("Audio metadata: ", result);
         this._metadata = result;
     }
 

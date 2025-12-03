@@ -21,6 +21,7 @@ export type AudioMetadata = {
     sampleRate: number;
     channels: number;
     durationMs: number;
+    decodedBitrate: number;
 }
 export const GetAudioMetadataAction = AudioAction.create<void, AudioMetadata>('getAudioMetadata', 'getAudioMetadata');
 
