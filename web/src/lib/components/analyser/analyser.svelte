@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import { ChevronDown } from 'lucide-svelte';
-	import { GeneralPanel, WaveformPanel } from './panels';
+	import { GeneralPanel, SpectralFluxPanel, WaveformPanel } from './panels';
 
 	type View = {
 		id: string;
@@ -58,6 +58,8 @@
 			<GeneralPanel />
 		{:else if selectedView.id === 'waveform'}
 			<WaveformPanel />
+		{:else if selectedView.id === 'spectral-flux'}
+			<SpectralFluxPanel />
 		{/if}
 	</main>
 </div>
