@@ -18,6 +18,49 @@ import (
 var isInitialized = false
 var audioData *parsers.AudioData
 
+func loadParsedAudio(this js.Value, args []js.Value) interface{} {
+	start := time.Now()
+	println("Received parsed audio from JS")
+	payload := args[0]
+	parsedAudioJs := payload.Get("parsedAudio")
+	rawDataJs := payload.Get("rawData")
+
+	rawDataLength := rawDataJs.Length()
+	rawData := make([]byte, rawDataLength)
+	js.CopyBytesToGo(rawData, rawDataJs)
+	reader := bytes.NewReader(rawData)
+	readCloser := io.NopCloser(reader)
+	_, fmt, _ := mp3.Decode(readCloser)
+
+	// Get the underlying ArrayBuffer from the Float64Array and copy as bytes
+	parsedAudioBuffer := parsedAudioJs.Get("buffer")
+	parsedAudioUint8 := js.Global().Get("Uint8Array").New(parsedAudioBuffer)
+	parsedAudioByteLength := parsedAudioUint8.Length()
+	parsedAudioBytes := make([]byte, parsedAudioByteLength)
+	js.CopyBytesToGo(parsedAudioBytes, parsedAudioUint8)
+
+	// Reinterpret bytes as [][2]float64 without copying
+	numStereoSamples := parsedAudioByteLength / 2
+	parsedAudioData := unsafe.Slice((*[2]float64)(unsafe.Pointer(&parsedAudioBytes[0])), numStereoSamples)
+
+	format := parsers.AudioFormat{
+		SampleRate:  int(fmt.SampleRate),
+		NumChannels: fmt.NumChannels,
+		Precision:   fmt.Precision,
+	}
+
+	audioData = &parsers.AudioData{
+		ParsedData: parsedAudioData,
+		RawData:    rawData,
+		Format:     format,
+	}
+
+	isInitialized = true
+	println("Time taken to copy bytes to go: ", formatSeconds(time.Since(start).Seconds()))
+
+	return js.ValueOf(true)
+}
+
 func loadAudio(this js.Value, args []js.Value) interface{} {
 	println("Received audio data")
 	start := time.Now()
@@ -54,28 +97,33 @@ func loadAudio(this js.Value, args []js.Value) interface{} {
 
 	println("Time taken to create buffer: ", formatSeconds(time.Since(start).Seconds()))
 
-	audioData = &parsers.AudioData{
-		Samples: buffer,
-		Format:  format,
-		RawData: data,
-	}
-
-	isInitialized = true
-	println("Time taken to load audio: ", formatSeconds(time.Since(start).Seconds()))
-
-	// Extract samples from buffer
+	// Convert beep.Buffer to [][2]float64
 	numSamples := buffer.Len()
 	sampleStreamer := buffer.Streamer(0, numSamples)
-	samples := make([][2]float64, numSamples)
-	n, ok := sampleStreamer.Stream(samples)
+	parsedAudioData := make([][2]float64, numSamples)
+	n, ok := sampleStreamer.Stream(parsedAudioData)
 	if !ok || n != numSamples {
 		println("Error streaming samples, got ", n, " expected ", numSamples)
 		return js.ValueOf(false)
 	}
 
+	myFormat := parsers.AudioFormat{
+		SampleRate:  int(format.SampleRate),
+		NumChannels: format.NumChannels,
+		Precision:   2,
+	}
+	audioData = &parsers.AudioData{
+		ParsedData: parsedAudioData,
+		RawData:    data,
+		Format:     myFormat,
+	}
+
+	isInitialized = true
+	println("Time taken to load audio: ", formatSeconds(time.Since(start).Seconds()))
+
 	// Bulk copy samples to JS using unsafe slice conversion
 	byteLength := numSamples * 16 // 2 channels * 8 bytes per float64
-	bytesSlice := unsafe.Slice((*byte)(unsafe.Pointer(&samples[0])), byteLength)
+	bytesSlice := unsafe.Slice((*byte)(unsafe.Pointer(&parsedAudioData[0])), byteLength)
 
 	// Create Uint8Array and bulk copy all bytes at once
 	samplesUint8Array := js.Global().Get("Uint8Array").New(byteLength)
@@ -133,6 +181,8 @@ func getAudioMetadata(this js.Value, args []js.Value) interface{} {
 }
 
 func getSpectralFlux(this js.Value, args []js.Value) interface{} {
+
+	println("Getting spectral flux", isInitialized)
 	if !isInitialized {
 		return js.ValueOf(false)
 	}
@@ -143,10 +193,13 @@ func getSpectralFlux(this js.Value, args []js.Value) interface{} {
 	}
 
 	spectralFlux, err := parser.Parse(audioData)
+	println("Spectral flux: ", spectralFlux)
 	if err != nil {
 		println("Error getting spectral flux: ", err)
 		return js.ValueOf(false)
 	}
+
+	println("Something new")
 
 	// Bulk copy to JS using unsafe slice conversion
 	byteLength := len(spectralFlux) * 8 // 8 bytes per float64
@@ -165,6 +218,7 @@ func main() {
 
 	// Prep functions
 	js.Global().Set("loadAudio", js.FuncOf(loadAudio))
+	js.Global().Set("loadParsedAudio", js.FuncOf(loadParsedAudio))
 	js.Global().Set("unloadAudio", js.FuncOf(unloadAudio))
 
 	// Audio metadata functions

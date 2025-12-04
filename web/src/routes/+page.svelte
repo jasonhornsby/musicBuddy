@@ -8,13 +8,22 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Music, CloudUpload, PlayCircle } from 'lucide-svelte';
 	import { setAudioContext } from '$lib/context/audio.svelte.js';
+	import { Switch } from '$lib/components/ui/switch';
+	import { Label } from '$lib/components/ui/label';
 
 	const { data } = $props();
 
 	let uploadFileInput = $state<HTMLInputElement | null>(null);
 	let isDragging = $state(false);
 
-    const audioContext = setAudioContext();
+	const audioContext = setAudioContext();
+
+	const hasAudioContext =
+		typeof window !== 'undefined' &&
+		(typeof AudioContext !== 'undefined' ||
+			typeof (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext !==
+				'undefined');
+
 
 	onMount(async () => {
 		audioContext.initWorker();
@@ -128,6 +137,17 @@
 								<span class="font-medium">{demoFile.name}</span>
 							</Button>
 						{/each}
+					</div>
+
+					<div class="flex items-center justify-between">
+						<Label for="acceleration-toggle" class="text-sm text-muted-foreground">
+							Use acceleration
+						</Label>
+						<Switch
+							id="acceleration-toggle"
+							bind:checked={audioContext.useHardwareAcceleration}
+							disabled={!hasAudioContext}
+						/>
 					</div>
 				{/if}
 			</Card.Content>

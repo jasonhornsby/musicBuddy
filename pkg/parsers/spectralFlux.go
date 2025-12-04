@@ -19,23 +19,10 @@ func (sfp *SpectralFluxParser) Name() string {
 }
 
 func (sfp *SpectralFluxParser) Parse(data *AudioData) ([]float64, error) {
-	samples := make([]float64, data.Samples.Len())
-	streamer := data.Samples.Streamer(0, data.Samples.Len())
-
-	// Temporary buffer to store the samples
-	tempBuffer := make([][2]float64, sfp.WindowSize)
-	sampleIdx := 0
-
-	for {
-		n, ok := streamer.Stream(tempBuffer[:])
-		if !ok || n == 0 {
-			break
-		}
-		for i := 0; i < n; i++ {
-			// Mix down to single channel, (Left + Right) / 2
-			samples[sampleIdx] = (tempBuffer[i][0] + tempBuffer[i][1]) / 2.0
-			sampleIdx++
-		}
+	println("Parsing spectral flux")
+	samples := make([]float64, len(data.ParsedData))
+	for i, sample := range data.ParsedData {
+		samples[i] = (sample[0] + sample[1]) / 2.0
 	}
 
 	win := window.Hann(sfp.WindowSize)
@@ -43,6 +30,7 @@ func (sfp *SpectralFluxParser) Parse(data *AudioData) ([]float64, error) {
 	var previousSpectrum []float64
 	var spectralFlux []float64
 
+	println("Parsing spectral flux 2")
 	for i := 0; i < len(samples)-sfp.WindowSize; i += sfp.HopSize {
 		frame := make([]float64, sfp.WindowSize)
 		copy(frame, samples[i:i+sfp.WindowSize])
@@ -70,6 +58,8 @@ func (sfp *SpectralFluxParser) Parse(data *AudioData) ([]float64, error) {
 		spectralFlux = append(spectralFlux, flux)
 		previousSpectrum = currSpectrum
 	}
+
+	println("Spectral flux: ", spectralFlux)
 
 	return smooth(spectralFlux, 50), nil
 }

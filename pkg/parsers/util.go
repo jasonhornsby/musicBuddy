@@ -2,17 +2,21 @@ package parsers
 
 import (
 	"fmt"
-
-	"github.com/gopxl/beep"
 )
+
+type AudioFormat struct {
+	SampleRate  int
+	NumChannels int
+	Precision   int
+}
 
 // AudioData holds the decoded audio samples and format information
 type AudioData struct {
-	Samples *beep.Buffer
-	RawData []byte
-	Format  beep.Format
+	ParsedData [][2]float64
+	RawData    []byte
+	Format     AudioFormat
 }
 
 func (a AudioData) String() string {
-	return fmt.Sprintf("AudioData{Samples: %v, Format: %v}", a.Samples.Len(), a.Format)
+	return fmt.Sprintf("AudioData{ParsedData: %v, RawData: %v, Format: %v}", a.ParsedData, a.RawData, a.Format)
 }

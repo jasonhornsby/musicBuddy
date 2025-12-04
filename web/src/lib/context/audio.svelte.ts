@@ -1,12 +1,12 @@
 import { getContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
-import { audioActions, GetAudioMetadataAction, GetSpectralFluxAction, LoadAudioAction, UnloadAudioAction, type AudioMetadata } from "./audio.actions";
+import { audioActions, GetAudioMetadataAction, GetSpectralFluxAction, LoadAudioAction, LoadParsedAudioAction, UnloadAudioAction, type AudioMetadata } from "./audio.actions";
 
 export class AudioContext {
     private _worker: Worker | null = null;
     private _pendingRequests = new Map<string, (result: any) => void>();
     private _isWorkerReady = $state(false);
-
+    private _useHardwareAcceleration = $state(true);
 
     private _parsingAudio = $state(false);
     private _audioLoaded = $state(false);
@@ -17,6 +17,16 @@ export class AudioContext {
     // Insights
     private _metadata = $state<AudioMetadata | null>(null);
 
+
+
+    get useHardwareAcceleration() {
+        return this._useHardwareAcceleration;
+    }
+
+
+    set useHardwareAcceleration(value: boolean) {
+        this._useHardwareAcceleration = value;
+    }
 
     get decoded() {
         return this._decoded;
@@ -114,16 +124,59 @@ export class AudioContext {
     private async loadAudioFromArrayBuffer(arrayBuffer: ArrayBuffer) {
         const uint8Array = new Uint8Array(arrayBuffer);
 
-        const result = await this.sendMessage<Float64Array | null>(LoadAudioAction.requestKey, uint8Array);
-        if (!result) {
-            toast.error("Failed to parse audio", { description: "Are you sure this is a mp3 file?" })
-            this._parsingAudio = false;
-            return;
+        let result: Float64Array | null = null;
+        if (this.useHardwareAcceleration) {
+            // Copy the arrayBuffer before decodeAudioData consumes it
+            const rawDataCopy = new Uint8Array(arrayBuffer.slice(0));
+            try {
+                const initialResult = await this.parseAudioJs(arrayBuffer);
+                result = initialResult.data;
+                const payload = {
+                    parsedAudio: new Uint8Array(result),
+                    rawData: rawDataCopy,
+                }
+                // since we parsed this in JS real we need to send the result to the worker
+                await this.sendMessage<Float64Array | null>(LoadParsedAudioAction.requestKey, payload);
+
+            } catch (e) {
+                toast.error("Failed to parse audio", { description: "Are you sure this is a mp3 file?" })
+                this._parsingAudio = false;
+                return;
+            }
+
+        } else {
+            result = await this.sendMessage<Float64Array | null>(LoadAudioAction.requestKey, uint8Array);
+            if (!result) {
+                toast.error("Failed to parse audio", { description: "Are you sure this is a mp3 file?" })
+                this._parsingAudio = false;
+                return;
+            }
         }
+
         this._decoded = result;
 
         this._parsingAudio = false;
         this._audioLoaded = true;
+    }
+
+    private async parseAudioJs(arrayBuffer: ArrayBuffer) {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Using the AudioContext compared to the work is insanely faster. HWA FTW!
+        const decoded = await ctx.decodeAudioData(arrayBuffer)
+
+        decoded.sampleRate
+
+        // Need to convert the decoded audio to a Float64Array
+        // The channels need to be interleaved
+        const interleaved = new Float64Array(decoded.length * 2);
+        for (let i = 0; i < decoded.length; i++) {
+            interleaved[i * 2] = decoded.getChannelData(0)[i];
+            interleaved[i * 2 + 1] = decoded.getChannelData(1)[i];
+        }
+        return {
+            data: interleaved,
+            meta: { sampleRate: decoded.sampleRate, channels: decoded.numberOfChannels }
+        };
     }
 
     async resetAudio() {
@@ -133,6 +186,7 @@ export class AudioContext {
             return;
         }
 
+        this._decoded = null;
         this._audioLoaded = false;
     }
 

@@ -54,13 +54,14 @@ func GetAudioMetadata(audioData *AudioData) (*AudioMetadata, error) {
 	}
 
 	println("Name: ", metadata.String())
+	println("Length: ", len(audioData.ParsedData))
 
 	decodedBitrate := int(audioData.Format.SampleRate) * audioData.Format.NumChannels * audioData.Format.Precision * 8
 
 	return &AudioMetadata{
 		SampleRate:     int(audioData.Format.SampleRate),
 		Channels:       audioData.Format.NumChannels,
-		DurationMs:     (int(audioData.Samples.Len()/int(audioData.Format.SampleRate)) * 1000),
+		DurationMs:     len(audioData.ParsedData) * 1000 / int(audioData.Format.SampleRate),
 		DecodedBitrate: decodedBitrate,
 		Metadata:       metadata,
 	}, nil
