@@ -29,6 +29,18 @@
                 trigger: 'axis',
                 axisPointer: {
                     type: 'cross'
+                },
+                formatter: (params: any) => {
+                    if (!Array.isArray(params) || params.length === 0) return '';
+                    const frameNumber = params[0].value[0];
+                    const seconds = (frameNumber / bufferView.getAudioInfo().sampleRate).toFixed(4);
+                    let result = `<strong>${seconds}s (sample ${frameNumber})</strong>`;
+                    params.forEach((param: any) => {
+                        const min = param.value[1]?.toFixed(4) ?? 'N/A';
+                        const max = param.value[2]?.toFixed(4) ?? 'N/A';
+                        result += `<br/>${param.marker} ${param.seriesName}: ${min} ~ ${max}`;
+                    });
+                    return result;
                 }
             },
             legend: {
