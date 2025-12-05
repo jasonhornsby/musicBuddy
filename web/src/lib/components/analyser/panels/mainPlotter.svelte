@@ -17,6 +17,58 @@
         return downSampledChannelData;
     }
 
+    // Threshold: when visible samples < targetPoints * this multiplier, switch to line renderer
+    const STICK_TO_LINE_THRESHOLD = 7;
+
+    function createStickSeries(index: number) {
+        return {
+            type: 'custom' as const,
+            name: `Channel ${index + 1}`,
+            datasetIndex: 1,
+            seriesLayoutBy: 'row' as const,
+            animation: false,
+            large: true,
+            encode: {
+                x: index * 3,
+                y: [index * 3 + 1, index * 3 + 2],
+            },
+            renderItem: (params: any, api: any) => {
+                const xValue = api.value(0);
+                const start = api.coord([xValue, api.value(1)]);
+                const end = api.coord([xValue, api.value(2)]);
+                return {
+                    type: 'line' as const,
+                    shape: {
+                        x1: start[0], y1: start[1],
+                        x2: end[0], y2: end[1]
+                    },
+                    style: api.style({
+                        stroke: api.visual('color'),
+                        lineWidth: 0.5
+                    })
+                }
+            }
+        };
+    }
+
+    function createLineSeries(index: number) {
+        return {
+            type: 'line' as const,
+            name: `Channel ${index + 1}`,
+            datasetIndex: 1,
+            seriesLayoutBy: 'row' as const,
+            animation: false,
+            showSymbol: false,
+            large: true,
+            encode: {
+                x: index * 3,
+                y: index * 3 + 1, // Use min value (or could average min/max)
+            },
+        };
+    }
+
+    let currentRendererType: 'stick' | 'line' = 'stick';
+
     function initChart() {
         if (!chartContainer) return;
 
@@ -113,38 +165,9 @@
                         tooltip: { show: false },
                     })
                 ),
-                // Visible custom series for actual waveform rendering
+                // Visible series for actual waveform rendering (starts as stick)
                 // Uses dataset 1 (dynamic main data)
-                ...bufferView.getChannelViews().map(
-                    (_, index) => ({
-                        type: 'custom' as const,
-                        name: `Channel ${index + 1}`,
-                        datasetIndex: 1,
-                        seriesLayoutBy: 'row' as const,
-                        animation: false,
-                        large: true,
-                        encode: {
-                            x: index * 3,
-                            y: [index * 3 + 1, index * 3 + 2],
-                        },
-                        renderItem: (params: any, api: any) => {
-                            const xValue = api.value(0);
-                            const start = api.coord([xValue, api.value(1)]);
-                            const end = api.coord([xValue, api.value(2)]);
-                            return {
-                                type: 'line' as const,
-                                shape: {
-                                    x1: start[0], y1: start[1],
-                                    x2: end[0], y2: end[1]
-                                },
-                                style: api.style({
-                                    stroke: api.visual('color'),
-                                    lineWidth: 0.5
-                                })
-                            }
-                        }
-                    })
-                )
+                ...bufferView.getChannelViews().map((_, index) => createStickSeries(index))
             ]
         }
         chart.setOption(option);
@@ -157,15 +180,42 @@
 
             const start = Math.floor(dataZoom[0].startValue as number || 0);
             const end = Math.ceil(dataZoom[0].endValue as number || bufferView.numSamples);
+            const visibleSamples = end - start;
+
+            // Determine which renderer to use based on zoom level
+            const shouldUseLine = visibleSamples < targetPoints * STICK_TO_LINE_THRESHOLD;
+            const newRendererType = shouldUseLine ? 'line' : 'stick';
 
             const downSampledChannelData = getDownsampledChannelData(targetPoints, { start, end });
-            // Only update dataset 1 (main view), leave dataset 0 (preview) unchanged
-            chart.setOption({
-                dataset: [
-                    {}, // Keep dataset 0 unchanged
-                    { source: downSampledChannelData as any } // Update dataset 1
-                ]
-            });
+            
+            // Only update series if renderer type changed
+            if (newRendererType !== currentRendererType) {
+                currentRendererType = newRendererType;
+                const numChannels = bufferView.getChannelViews().length;
+                const newMainSeries = bufferView.getChannelViews().map((_, index) => 
+                    shouldUseLine ? createLineSeries(index) : createStickSeries(index)
+                );
+                
+                // Get current series (preview series) and replace main series
+                const currentSeries = option.series as any[];
+                const previewSeries = currentSeries.slice(0, numChannels);
+                
+                chart.setOption({
+                    dataset: [
+                        {}, // Keep dataset 0 unchanged
+                        { source: downSampledChannelData as any }
+                    ],
+                    series: [...previewSeries, ...newMainSeries]
+                }, { replaceMerge: ['series'] });
+            } else {
+                // Only update dataset 1 (main view), leave dataset 0 (preview) unchanged
+                chart.setOption({
+                    dataset: [
+                        {}, // Keep dataset 0 unchanged
+                        { source: downSampledChannelData as any } // Update dataset 1
+                    ]
+                });
+            }
         })
 
         window.addEventListener('resize', () => chart?.resize());
