@@ -1,5 +1,5 @@
 import { AudioBufferManager } from "$lib/utils/audioBufferManager";
-import { AudioWorkerManager } from "$lib/worker/audio-worker-manager.svelte";
+import { AudioWorkerManager } from "$lib/utils/audioWorker/audio-worker-manager.svelte";
 import { getContext, setContext } from "svelte";
 
 
