@@ -89,8 +89,7 @@ export class AudioBufferManager {
 
             console.log(`Decoded channel ${channel}: ${channelSAB.byteLength} bytes`);
         }
-
-        return {
+        const audioBufferSetup: AudioBufferSetup = {
             rawMp3SAB,
             rawMp3Size,
             decodedChannelSABs,
@@ -99,10 +98,11 @@ export class AudioBufferManager {
             sampleRate,
             duration,
         }
+
+        return audioBufferSetup;
     }
 
     public createViews(bufferSetup: AudioBufferSetup) {
         return bufferSetup.decodedChannelSABs.map((sab) => new Float32Array(sab));
     }
-
 }

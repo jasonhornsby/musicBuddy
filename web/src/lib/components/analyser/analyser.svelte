@@ -8,12 +8,12 @@
 		Music,
 		Info,
 		Activity,
-		AudioWaveform,
 		BarChart3,
 		RotateCcw,
-		HelpCircle
+		HelpCircle,
+		Eye
 	} from 'lucide-svelte';
-	import { GeneralPanel, SpectralFluxPanel, WaveformPanel } from './panels';
+	import { GeneralPanel, SpectralFluxPanel, VisualisationPanel } from './panels';
 	import { getAudioContext } from '$lib/context/audio.svelte';
 
 	const audioContext = getAudioContext();
@@ -27,10 +27,10 @@
 
 	const views: View[] = [
 		{
-			id: 'waveform',
-			name: 'Waveform',
-			description: 'Visual representation of amplitude over time',
-			icon: AudioWaveform
+			id: 'visualisation',
+			name: 'Visualisation',
+			description: 'Visual representation of audio data',
+			icon: Eye
 		},
 		{
 			id: 'general',
@@ -92,18 +92,6 @@
 					<Tooltip.Trigger>
 						<button
 							class="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-							onclick={() => audioContext.resetAudio()}
-						>
-							<RotateCcw class="h-4 w-4" strokeWidth={1.5} />
-						</button>
-					</Tooltip.Trigger>
-					<Tooltip.Content side="right" sideOffset={8}>Reset</Tooltip.Content>
-				</Tooltip.Root>
-
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						<button
-							class="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
 						>
 							<HelpCircle class="h-4 w-4" strokeWidth={1.5} />
 						</button>
@@ -155,10 +143,10 @@
 
 			<!-- Content area -->
 			<main class="flex-1 overflow-hidden bg-muted/10">
-				{#if selectedView.id === 'general'}
+				{#if selectedView.id === 'visualisation'}
+					<VisualisationPanel />
+				{:else if selectedView.id === 'general'}
 					<GeneralPanel />
-				{:else if selectedView.id === 'waveform'}
-					<WaveformPanel />
 				{:else if selectedView.id === 'spectral-flux'}
 					<SpectralFluxPanel />
 				{:else}

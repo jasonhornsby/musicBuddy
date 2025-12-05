@@ -1,5 +1,5 @@
 import GeneralPanel from './general.svelte';
-import WaveformPanel from './waveform.svelte';
 import SpectralFluxPanel from './spectralFlux.svelte';
+import VisualisationPanel from './visualisation.svelte';
 
-export { GeneralPanel, WaveformPanel, SpectralFluxPanel };
+export { GeneralPanel, SpectralFluxPanel, VisualisationPanel };
