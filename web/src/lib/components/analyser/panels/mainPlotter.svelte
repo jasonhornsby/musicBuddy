@@ -92,6 +92,7 @@
                         animation: false,
                         showSymbol: false,
                         silent: true,
+                        large: true,
                         lineStyle: { opacity: 0 },
                         areaStyle: { opacity: 0 },
                         encode: {
@@ -110,6 +111,7 @@
                         name: `Channel ${index + 1}`,
                         seriesLayoutBy: 'row' as const,
                         animation: false,
+                        large: true,
                         encode: {
                             x: index * 3,
                             y: [index * 3 + 1, index * 3 + 2],
