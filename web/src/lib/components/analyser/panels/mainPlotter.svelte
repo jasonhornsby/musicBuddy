@@ -46,7 +46,9 @@
             legend: {
                 show: true,
                 top: 0,
-                left: 'center'
+                left: 'center',
+                // Only show the actual channel series, not the preview series
+                data: bufferView.getChannelViews().map((_, index) => `Channel ${index + 1}`)
             },
             grid: {
                 left: 40,
@@ -61,7 +63,8 @@
                     xAxisIndex: 0,
                     start: 0,
                     end: 100,
-                    bottom: 10
+                    bottom: 10,
+                    showDataShadow: true,
                 },
                 {
                     type: 'inside',
@@ -79,34 +82,57 @@
                 }
             } },
             yAxis: { type: 'value', min: -1, max: 1 },
-            series: bufferView.getChannelViews().map(
-                (_, index) => ({
-                    type: 'custom',
-                    name: `Channel ${index + 1}`,
-                    seriesLayoutBy: 'row',
-                    animation: false,
-                    encode: {
-                        x: index * 3,
-                        y: [index * 3 + 1, index * 3 + 2],
-                    },
-                    renderItem: (params: any, api: any) => {
-                        const xValue = api.value(0);
-                        const start = api.coord([xValue, api.value(1)]);
-                        const end = api.coord([xValue, api.value(2)]);
-                        return {
-                            type: 'line',
-                            shape: {
-                                x1: start[0], y1: start[1],
-                                x2: end[0], y2: end[1]
-                            },
-                            style: api.style({
-                                stroke: api.visual('color'),
-                                lineWidth: 1.5
-                            })
+            series: [
+                // Hidden line series for dataZoom preview (one per channel)
+                ...bufferView.getChannelViews().map(
+                    (_, index) => ({
+                        type: 'line' as const,
+                        name: `Channel ${index + 1} Preview`,
+                        seriesLayoutBy: 'row' as const,
+                        animation: false,
+                        showSymbol: false,
+                        silent: true,
+                        lineStyle: { opacity: 0 },
+                        areaStyle: { opacity: 0 },
+                        encode: {
+                            x: index * 3,
+                            y: index * 3 + 2, // Use max value for preview shape
+                        },
+                        // Hide from legend and tooltip
+                        legendHoverLink: false,
+                        tooltip: { show: false },
+                    })
+                ),
+                // Visible custom series for actual waveform rendering
+                ...bufferView.getChannelViews().map(
+                    (_, index) => ({
+                        type: 'custom' as const,
+                        name: `Channel ${index + 1}`,
+                        seriesLayoutBy: 'row' as const,
+                        animation: false,
+                        encode: {
+                            x: index * 3,
+                            y: [index * 3 + 1, index * 3 + 2],
+                        },
+                        renderItem: (params: any, api: any) => {
+                            const xValue = api.value(0);
+                            const start = api.coord([xValue, api.value(1)]);
+                            const end = api.coord([xValue, api.value(2)]);
+                            return {
+                                type: 'line' as const,
+                                shape: {
+                                    x1: start[0], y1: start[1],
+                                    x2: end[0], y2: end[1]
+                                },
+                                style: api.style({
+                                    stroke: api.visual('color'),
+                                    lineWidth: 0.5
+                                })
+                            }
                         }
-                    }
-                })
-            )
+                    })
+                )
+            ]
         }
         chart.setOption(option);
 
