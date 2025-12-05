@@ -55,6 +55,9 @@ export class AudioContext {
     async initWorker() {
         if (this._worker) return;
 
+        this._isWorkerReady = true;
+        return
+
         this._worker = new Worker(
             new URL('$lib/context/audio.worker.ts', import.meta.url),
             { type: 'module' }

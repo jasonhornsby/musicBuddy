@@ -10,6 +10,7 @@
 	import { setAudioContext } from '$lib/context/audio.svelte.js';
 	import { Switch } from '$lib/components/ui/switch';
 	import { Label } from '$lib/components/ui/label';
+	import { AudioBufferManager } from '$lib/utils/audioBufferManager';
 
 	const { data } = $props();
 
@@ -26,19 +27,23 @@
 
 
 	onMount(async () => {
-		audioContext.initWorker();
+		 audioContext.initWorker();
 	});
 
 	async function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
-
-		audioContext.loadAudio(file);
+		const audioBufferManager = new AudioBufferManager()
+		const bufferSetup = await audioBufferManager.loadAudioFile(file);
+		console.log(bufferSetup);
+		// audioContext.loadAudio(file);
 	}
 
 	async function loadDemoFile(demoFile: DemoFile) {
-		audioContext.loadAudioFromSrc(demoFile.src);
+		const audioBufferManager = new AudioBufferManager();
+		const bufferSetup = await audioBufferManager.loadAudioFromSrc(demoFile.src);
+		console.log(bufferSetup);
 	}
 
 	function handleDrop(event: DragEvent) {
