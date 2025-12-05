@@ -23,7 +23,11 @@
         chart = echarts.init(chartContainer);
 
         const targetPoints = 700;
-        const downSampledChannelData = getDownsampledChannelData(targetPoints);
+        // Static data for preview (never changes)
+        const previewData = getDownsampledChannelData(targetPoints);
+        // Dynamic data for main view (updates on zoom)
+        const mainData = getDownsampledChannelData(targetPoints);
+        
         const option: echarts.EChartsOption = {
             tooltip: {
                 trigger: 'axis',
@@ -73,9 +77,12 @@
                     end: 100,
                 }
             ],
-            dataset: {
-                source: downSampledChannelData as any,
-            },
+            dataset: [
+                // Dataset 0: Static preview data (never updated)
+                { source: previewData as any },
+                // Dataset 1: Dynamic main view data (updated on zoom)
+                { source: mainData as any }
+            ],
             xAxis: { type: 'value', min: 0, max: bufferView.numSamples, axisLabel: {
                 formatter: (frameNumber: number) => {
                     return `${(frameNumber / bufferView.getAudioInfo().sampleRate).toFixed(2)}s`;
@@ -84,10 +91,12 @@
             yAxis: { type: 'value', min: -1, max: 1 },
             series: [
                 // Hidden line series for dataZoom preview (one per channel)
+                // Uses dataset 0 (static preview data)
                 ...bufferView.getChannelViews().map(
                     (_, index) => ({
                         type: 'line' as const,
                         name: `Channel ${index + 1} Preview`,
+                        datasetIndex: 0,
                         seriesLayoutBy: 'row' as const,
                         animation: false,
                         showSymbol: false,
@@ -105,10 +114,12 @@
                     })
                 ),
                 // Visible custom series for actual waveform rendering
+                // Uses dataset 1 (dynamic main data)
                 ...bufferView.getChannelViews().map(
                     (_, index) => ({
                         type: 'custom' as const,
                         name: `Channel ${index + 1}`,
+                        datasetIndex: 1,
                         seriesLayoutBy: 'row' as const,
                         animation: false,
                         large: true,
@@ -148,10 +159,12 @@
             const end = Math.ceil(dataZoom[0].endValue as number || bufferView.numSamples);
 
             const downSampledChannelData = getDownsampledChannelData(targetPoints, { start, end });
+            // Only update dataset 1 (main view), leave dataset 0 (preview) unchanged
             chart.setOption({
-                dataset: {
-                    source: downSampledChannelData as any
-                }
+                dataset: [
+                    {}, // Keep dataset 0 unchanged
+                    { source: downSampledChannelData as any } // Update dataset 1
+                ]
             });
         })
 
