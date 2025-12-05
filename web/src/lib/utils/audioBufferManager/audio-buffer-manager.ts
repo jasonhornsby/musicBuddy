@@ -16,9 +16,16 @@ export interface AudioBufferSetup {
 }
 
 export class AudioLoadError extends Error {
-    constructor(message: string) {
-        super(message);
+    constructor() {
+        super("Failed to load audio from url");
         this.name = 'AudioLoadError';
+    }
+}
+
+export class AudioDecodeError extends Error {
+    constructor() {
+        super("Failed to decode audio");
+        this.name = 'AudioDecodeError';
     }
 }
 
@@ -38,7 +45,7 @@ export class AudioBufferManager {
     async loadAudioFromSrc(src: string) {
         const response = await fetch(src);
         if (!response.ok) {
-            throw new AudioLoadError(`Failed to load audio from ${src}`);
+            throw new AudioLoadError();
         }
         const arrayBuffer = await response.arrayBuffer();
         return this.loadAudio(arrayBuffer);
@@ -54,7 +61,12 @@ export class AudioBufferManager {
         rawMp3View.set(new Uint8Array(rawMp3ArrayBuffer));
 
         // Decode the audio, need to copy to avoid array being consumed by decodeAudioData
-        const audioBuffer = await this.audioContext.decodeAudioData(rawMp3ArrayBuffer.slice(0));
+        let audioBuffer: AudioBuffer;
+        try {
+            audioBuffer = await this.audioContext.decodeAudioData(rawMp3ArrayBuffer.slice(0));
+        } catch (error) {
+            throw new AudioDecodeError();
+        }
 
         const numChannels = audioBuffer.numberOfChannels;
         const numSamples = audioBuffer.length;
