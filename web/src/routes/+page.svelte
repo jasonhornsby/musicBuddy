@@ -11,6 +11,7 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import { Label } from '$lib/components/ui/label';
 	import { AudioBufferManager } from '$lib/utils/audioBufferManager';
+	import { AudioWorkerManager } from '$lib/worker/audio-worker-manager.js';
 
 	const { data } = $props();
 
@@ -18,6 +19,7 @@
 	let isDragging = $state(false);
 
 	const audioContext = setAudioContext();
+	let audioWorkerManager = $state<AudioWorkerManager | null>(null);
 
 	const hasAudioContext =
 		typeof window !== 'undefined' &&
@@ -27,7 +29,8 @@
 
 
 	onMount(async () => {
-		 audioContext.initWorker();
+		audioContext.initWorker();
+		audioWorkerManager = new AudioWorkerManager();
 	});
 
 	async function handleFileChange(event: Event) {
@@ -36,14 +39,19 @@
 		if (!file) return;
 		const audioBufferManager = new AudioBufferManager()
 		const bufferSetup = await audioBufferManager.loadAudioFile(file);
-		console.log(bufferSetup);
-		// audioContext.loadAudio(file);
+
+		if (!audioWorkerManager) return;
+
+		audioWorkerManager.sendAudioData(bufferSetup);
 	}
 
 	async function loadDemoFile(demoFile: DemoFile) {
 		const audioBufferManager = new AudioBufferManager();
 		const bufferSetup = await audioBufferManager.loadAudioFromSrc(demoFile.src);
-		console.log(bufferSetup);
+
+		if (!audioWorkerManager) return;
+
+		audioWorkerManager.sendAudioData(bufferSetup);
 	}
 
 	function handleDrop(event: DragEvent) {

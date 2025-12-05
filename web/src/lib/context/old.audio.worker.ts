@@ -1,12 +1,5 @@
 import "$lib/context/wasm_exec.js"
 
-declare global {
-    class Go {
-        importObject: WebAssembly.Imports;
-        run(instance: WebAssembly.Instance): Promise<void>;
-    }
-}
-
 import { audioActions } from "./audio.actions.ts";
 
 let isReady = false;

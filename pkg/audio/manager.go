@@ -15,12 +15,12 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) Load(msg js.Value) error {
-	rawMp3SAB := msg.Get("rawMp3SAB")
-	rawMp3Size := msg.Get("rawMp3Size").Int()
+	rawMp3SAB := msg.Get("rawMP3Buffer")
+	rawMp3Size := msg.Get("rawMP3Size").Int()
 
 	m.rawMp3 = NewRawMp3Data(rawMp3SAB, rawMp3Size)
 
-	decodedJsBuffers := msg.Get("decodedJsBuffers")
+	decodedJsBuffers := msg.Get("decodedBuffers")
 	numChannels := msg.Get("numChannels").Int()
 	numSamples := msg.Get("numSamples").Int()
 	sampleRate := msg.Get("sampleRate").Int()

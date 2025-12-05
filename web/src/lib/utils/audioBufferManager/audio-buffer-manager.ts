@@ -1,4 +1,4 @@
-interface AudioBufferSetup {
+export interface AudioBufferSetup {
     /**
      * The raw MP3 data as a SharedArrayBuffer
      * Used to extract meta information from the mp3 file
@@ -91,19 +91,6 @@ export class AudioBufferManager {
 
     public createViews(bufferSetup: AudioBufferSetup) {
         return bufferSetup.decodedChannelSABs.map((sab) => new Float32Array(sab));
-    }
-
-    public sendToWorker(worker: Worker, bufferSetup: AudioBufferSetup) {
-        worker.postMessage({
-            type: 'loadAudio',
-            rawMp3Buffer: bufferSetup.rawMp3SAB,
-            rawMp3Size: bufferSetup.rawMp3Size,
-            decodedChannelBuffers: bufferSetup.decodedChannelSABs,
-            numChannels: bufferSetup.numChannels,
-            numSamples: bufferSetup.numSamples,
-            sampleRate: bufferSetup.sampleRate,
-            duration: bufferSetup.duration,
-        })
     }
 
 }
