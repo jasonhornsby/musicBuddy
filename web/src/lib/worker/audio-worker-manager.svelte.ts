@@ -2,6 +2,9 @@ import type { AudioBufferSetup } from "$lib/utils/audioBufferManager";
 import AudioWorker from './audio.worker.ts?worker';
 
 export class AudioWorkerManager {
+    public isReady = $state(false);
+    public isAudioLoaded = $state(false);
+
     private worker: Worker;
 
     constructor() {
@@ -19,6 +22,7 @@ export class AudioWorkerManager {
                 case 'worker_error':
                     break
                 case 'audio_loaded':
+                    this.isAudioLoaded = true;
                     break;
                 default:
                     console.warn(`Unknown message type: ${type}`);
@@ -32,7 +36,7 @@ export class AudioWorkerManager {
     }
 
     private onWorkerReady() {
-        console.log('Worker ready');
+        this.isReady = true;
     }
 
     public sendAudioData(bufferSetup: AudioBufferSetup) {

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import type { DemoFile } from '../remote/demo-files.remote';
@@ -8,10 +7,6 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Music, CloudUpload, PlayCircle } from 'lucide-svelte';
 	import { setAudioContext } from '$lib/context/audio.svelte.js';
-	import { Switch } from '$lib/components/ui/switch';
-	import { Label } from '$lib/components/ui/label';
-	import { AudioBufferManager } from '$lib/utils/audioBufferManager';
-	import { AudioWorkerManager } from '$lib/worker/audio-worker-manager.js';
 
 	const { data } = $props();
 
@@ -19,39 +14,16 @@
 	let isDragging = $state(false);
 
 	const audioContext = setAudioContext();
-	let audioWorkerManager = $state<AudioWorkerManager | null>(null);
-
-	const hasAudioContext =
-		typeof window !== 'undefined' &&
-		(typeof AudioContext !== 'undefined' ||
-			typeof (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext !==
-				'undefined');
-
-
-	onMount(async () => {
-		audioContext.initWorker();
-		audioWorkerManager = new AudioWorkerManager();
-	});
 
 	async function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
-		const audioBufferManager = new AudioBufferManager()
-		const bufferSetup = await audioBufferManager.loadAudioFile(file);
-
-		if (!audioWorkerManager) return;
-
-		audioWorkerManager.sendAudioData(bufferSetup);
+		audioContext.loadAudioFile(file);
 	}
 
 	async function loadDemoFile(demoFile: DemoFile) {
-		const audioBufferManager = new AudioBufferManager();
-		const bufferSetup = await audioBufferManager.loadAudioFromSrc(demoFile.src);
-
-		if (!audioWorkerManager) return;
-
-		audioWorkerManager.sendAudioData(bufferSetup);
+		audioContext.loadAudioFromSrc(demoFile.src);
 	}
 
 	function handleDrop(event: DragEvent) {
@@ -63,12 +35,9 @@
 			handleFileChange(fakeEvent);
 		}
 	}
-
-    $inspect(audioContext.audioLoaded);
-    $inspect(audioContext.parsingAudio);
 </script>
 
-{#if !audioContext.audioLoaded}
+{#if !audioContext.isAudioLoaded}
 	<div
 		class="min-h-screen w-full flex items-center justify-center p-6 bg-linear-to-br from-background via-background to-muted/30"
 	>
@@ -86,7 +55,7 @@
 			</Card.Header>
 
 			<Card.Content class="flex flex-col gap-6">
-				{#if audioContext.parsingAudio || !audioContext.isWorkerReady}
+				{#if audioContext.isParsingAudio || !audioContext.isWorkerReady}
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<Spinner class="size-8 text-primary" />
 						<span class="text-sm text-muted-foreground font-medium">
@@ -150,17 +119,6 @@
 								<span class="font-medium">{demoFile.name}</span>
 							</Button>
 						{/each}
-					</div>
-
-					<div class="flex items-center justify-between">
-						<Label for="acceleration-toggle" class="text-sm text-muted-foreground">
-							Use acceleration
-						</Label>
-						<Switch
-							id="acceleration-toggle"
-							bind:checked={audioContext.useHardwareAcceleration}
-							disabled={!hasAudioContext}
-						/>
 					</div>
 				{/if}
 			</Card.Content>
