@@ -1,19 +1,7 @@
 <script lang="ts">
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as Item from '$lib/components/ui/item';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { Button } from '$lib/components/ui/button';
-	import {
-		ChevronDown,
-		Music,
-		Info,
-		Activity,
-		BarChart3,
-		RotateCcw,
-		HelpCircle,
-		Eye
-	} from 'lucide-svelte';
-	import { GeneralPanel, SpectralFluxPanel, VisualisationPanel } from './panels';
+	import { Music, Info, HelpCircle, Eye } from 'lucide-svelte';
+	import { GeneralPanel, VisualisationPanel } from './panels';
 	import { getAudioContext } from '$lib/context/audio.svelte';
 
 	const audioContext = getAudioContext();
@@ -37,18 +25,6 @@
 			name: 'General Information',
 			description: 'Overview of file metadata, duration, sample rate, and channels',
 			icon: Info
-		},
-		{
-			id: 'spectral-flux',
-			name: 'Spectral Flux',
-			description: 'Measure of how quickly the spectrum changes, useful for onset detection',
-			icon: Activity
-		},
-		{
-			id: 'spectrogram',
-			name: 'Spectrogram',
-			description: 'Frequency content visualization across time',
-			icon: BarChart3
 		}
 	];
 
@@ -104,41 +80,10 @@
 		<!-- Main content area -->
 		<div class="flex flex-1 flex-col min-w-0">
 			<!-- Header bar -->
-			<header class="flex h-11 items-center justify-between border-b border-border/40 px-4">
+			<header class="flex h-11 items-center border-b border-border/40 px-4">
 				<span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
 					{selectedView.name}
 				</span>
-
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger>
-						{#snippet child({ props })}
-							<Button
-								variant="ghost"
-								size="sm"
-								class="h-7 px-2 text-xs font-normal text-muted-foreground hover:text-foreground"
-								{...props}
-							>
-								View
-								<ChevronDown class="ml-1 h-3 w-3" />
-							</Button>
-						{/snippet}
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content class="w-72" align="end">
-						{#each views as view (view.id)}
-							<DropdownMenu.Item class="p-0" onclick={() => (selectedView = view)}>
-								<Item.Root size="sm" class="w-full p-2">
-									<div class="flex h-8 w-8 items-center justify-center rounded-md bg-muted/50">
-										<view.icon class="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-									</div>
-									<Item.Content class="gap-0.5">
-										<Item.Title class="text-sm">{view.name}</Item.Title>
-										<Item.Description class="text-xs">{view.description}</Item.Description>
-									</Item.Content>
-								</Item.Root>
-							</DropdownMenu.Item>
-						{/each}
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
 			</header>
 
 			<!-- Content area -->
@@ -147,12 +92,6 @@
 					<VisualisationPanel />
 				{:else if selectedView.id === 'general'}
 					<GeneralPanel />
-				{:else if selectedView.id === 'spectral-flux'}
-					<SpectralFluxPanel />
-				{:else}
-					<div class="flex items-center justify-center h-full text-muted-foreground">
-						<p class="text-sm">{selectedView.name} - Coming soon</p>
-					</div>
 				{/if}
 			</main>
 		</div>
