@@ -5,31 +5,31 @@ import (
 	"syscall/js"
 )
 
-var audioManager *audio.Manager
+var (
+	audioManager    = audio.NewManager()
+	pipelineManager = audio.NewPipelineManager(audioManager)
+)
 
 func onMessage(this js.Value, args []js.Value) interface{} {
-	msg := args[0]
-	msgData := msg.Get("data")
-	msgType := msgData.Get("type").String()
+	event := args[0]
+	data := event.Get("data")
 
+	if data.Type() == js.TypeUndefined || data.Type() == js.TypeNull {
+		println("[Go] Invalid message data")
+		return nil
+	}
+
+	msgType := data.Get("type").String()
 	println("[Go] Message received: ", msgType)
 
 	switch msgType {
 	case "load_audio":
-		println("[Go] Loading audio")
-		err := audioManager.Load(msgData)
-		if err != nil {
-			println("Error loading audio: ", err)
-			return nil
-		}
+		handleLoadAudio(data)
+	case "create_viz":
+		handleCreateViz(data)
+	case "update_viz":
+		handleUpdateViz(data)
 
-		js.Global().Call("postMessage", js.ValueOf(map[string]interface{}{
-			"type":        "audio_loaded",
-			"numChannels": audioManager.GetDecoded().NumChannels(),
-			"numSamples":  audioManager.GetDecoded().NumSamples(),
-			"sampleRate":  audioManager.GetDecoded().SampleRate(),
-		}))
-		println("[Go] Audio loaded")
 	default:
 		println("[Go] Unknown message type: ", msgType)
 		return nil
@@ -38,11 +38,57 @@ func onMessage(this js.Value, args []js.Value) interface{} {
 	return nil
 }
 
+func handleLoadAudio(data js.Value) {
+	println("[Go] Loading audio")
+	err := audioManager.Load(data)
+	if err != nil {
+		println("[Go] Error loading audio: ", err.Error())
+		postMessage("error", map[string]interface{}{
+			"message": err.Error(),
+		})
+		return
+	}
+	postMessage("audio_loaded", map[string]interface{}{
+		"numChannels": audioManager.GetNumChannels(),
+		"numSamples":  audioManager.GetNumSamples(),
+		"sampleRate":  audioManager.GetSampleRate(),
+	})
+}
+
+func handleUpdateViz(data js.Value) {
+	println("[Go] Updating visualizer")
+	id := data.Get("id").String()
+	pipelineManager.UpdateViz(id)
+}
+
+func handleCreateViz(data js.Value) {
+	println("[Go] Creating visualizer")
+	id := data.Get("id").String()
+	vizType := data.Get("vizType").String()
+	buffer := data.Get("buffer")
+
+	pipelineManager.CreateVisualizer(id, vizType)
+	pipelineManager.BindVizBuffer(id, buffer)
+}
+
+func postMessage(msgType string, payload map[string]interface{}) {
+	obj := js.Global().Get("Object").New()
+	obj.Set("type", msgType)
+
+	for k, v := range payload {
+		obj.Set(k, v)
+	}
+
+	js.Global().Call("postMessage", obj)
+	println("[Go] Message sent: ", msgType)
+}
+
 func main() {
 	defer println("[Go] Wasm worker stopped")
 
 	println("[Go] Initializing audio manager")
 	audioManager = audio.NewManager()
+	pipelineManager = audio.NewPipelineManager(audioManager)
 
 	js.Global().Set("onmessage", js.FuncOf(onMessage))
 

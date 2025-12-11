@@ -23,6 +23,7 @@ export class AudioWorkerManager {
                     break
                 case 'audio_loaded':
                     this.isAudioLoaded = true;
+                    console.log('[TS] Audio loaded:', data);
                     break;
                 default:
                     console.warn(`Unknown message type: ${type}`);
@@ -54,5 +55,31 @@ export class AudioWorkerManager {
 
     public terminate() {
         this.worker.terminate();
+    }
+
+    public createVisualizer(id: string, type: 'waveform', width: number) {
+        // Create SAB for the output buffer
+        const sab = new SharedArrayBuffer(width * 4);
+
+        // Create JS views into the SAB
+        const floatView = new Float32Array(sab);
+        const uInt8View = new Uint8Array(sab);
+
+        // Create visualizer
+        this.worker.postMessage({
+            type: 'create_viz',
+            id: id,
+            vizType: type,
+            buffer: uInt8View
+        });
+
+        return floatView;
+    }
+
+    public updateVisualizer(id: string) {
+        this.worker.postMessage({
+            type: 'update_viz',
+            id: id
+        });
     }
 }

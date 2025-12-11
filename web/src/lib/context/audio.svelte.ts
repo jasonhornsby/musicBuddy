@@ -21,6 +21,10 @@ export class AudioContext {
     private workerManager = new AudioWorkerManager();
     private bufferManager = new AudioBufferManager();
 
+    public getAudioWorkerManager() {
+        return this.workerManager;
+    }
+
     public get isWorkerReady() {
         return this.workerManager.isReady;
     }

@@ -1,8 +1,13 @@
 package audio
 
-import "syscall/js"
+import (
+	"fmt"
+	"syscall/js"
+)
 
 type Manager struct {
+	BaseNode
+
 	rawMp3  *RawMp3Data
 	decoded *DecodedAudioData
 	loaded  bool
@@ -10,8 +15,22 @@ type Manager struct {
 
 func NewManager() *Manager {
 	return &Manager{
+		BaseNode: BaseNode{
+			id: "source",
+		},
 		loaded: false,
 	}
+}
+
+func (m *Manager) GetId() string {
+	return "source"
+}
+
+func (m *Manager) GetData() (interface{}, error) {
+	if !m.loaded {
+		return nil, fmt.Errorf("Audio not laoded")
+	}
+	return m.decoded, nil
 }
 
 func (m *Manager) Load(msg js.Value) error {
@@ -24,15 +43,16 @@ func (m *Manager) Load(msg js.Value) error {
 	numChannels := msg.Get("numChannels").Int()
 	numSamples := msg.Get("numSamples").Int()
 	sampleRate := msg.Get("sampleRate").Int()
-	duration := msg.Get("duration").Float()
 
 	channelSabs := make([]js.Value, numChannels)
 	for i := 0; i < numChannels; i++ {
 		channelSabs[i] = decodedJsBuffers.Index(i)
 	}
 
-	m.decoded = NewDecodedAudioData(channelSabs, numSamples, sampleRate, duration)
+	m.decoded = NewDecodedAudioData(channelSabs, numSamples, sampleRate)
 	m.loaded = true
+
+	m.Invalidate()
 
 	return nil
 }
@@ -47,4 +67,16 @@ func (m *Manager) GetRawMp3() *RawMp3Data {
 
 func (m *Manager) GetDecoded() *DecodedAudioData {
 	return m.decoded
+}
+
+func (m *Manager) GetNumChannels() int {
+	return len(m.decoded.channels)
+}
+
+func (m *Manager) GetNumSamples() int {
+	return m.decoded.numSamples
+}
+
+func (m *Manager) GetSampleRate() int {
+	return m.decoded.sampleRate
 }
