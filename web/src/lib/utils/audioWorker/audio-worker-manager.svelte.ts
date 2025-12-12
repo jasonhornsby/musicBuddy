@@ -41,11 +41,12 @@ export class AudioWorkerManager {
     }
 
     public sendAudioData(bufferSetup: AudioBufferSetup) {
+        const decodedViews = bufferSetup.decodedChannelSABs.map((sab) => new Float32Array(sab));
         this.worker.postMessage({
             type: 'load_audio',
             rawMP3Buffer: bufferSetup.rawMp3SAB,
             rawMP3Size: bufferSetup.rawMp3Size,
-            decodedBuffers: bufferSetup.decodedChannelSABs,
+            decodedBuffers: decodedViews,
             numChannels: bufferSetup.numChannels,
             numSamples: bufferSetup.numSamples,
             sampleRate: bufferSetup.sampleRate,

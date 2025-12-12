@@ -10,11 +10,16 @@
 	const width = $state(800);
 	const vizData = workerManager.createVisualizer('test-viz', 'waveform', width);
 
-	console.log(vizData);
-
 	function updateViz() {
 		workerManager.updateVisualizer('test-viz');
+	}
+
+	function loop() {
+		workerManager.updateVisualizer('test-viz');
+
+
 		console.log(vizData);
+		requestAnimationFrame(loop);
 	}
 
 

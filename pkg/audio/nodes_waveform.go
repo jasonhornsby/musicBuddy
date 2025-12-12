@@ -43,11 +43,9 @@ func (n *WaveVizNode) Update() {
 
 	step := len(samples) / outputLen
 
-	if step < 1 {
-		step = 1
-	}
+	step = max(step, 1)
 
-	for i := 0; i < outputLen; i++ {
+	for i := range outputLen {
 		srcIdx := int(float64(i) * float64(step))
 
 		if srcIdx < len(samples) {

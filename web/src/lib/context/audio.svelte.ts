@@ -61,6 +61,7 @@ export class AudioContext {
             duration: bufferSetup.duration,
         }
         this.channelViews = this.bufferManager.createViews(bufferSetup);
+        console.log(bufferSetup);
         this.isParsingAudio = false;
     }
 
