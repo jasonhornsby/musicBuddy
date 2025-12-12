@@ -69,6 +69,7 @@ func handleCreateViz(data js.Value) {
 
 	pipelineManager.CreateVisualizer(id, vizType)
 	pipelineManager.BindVizBuffer(id, buffer)
+	pipelineManager.UpdateViz(id)
 }
 
 func postMessage(msgType string, payload map[string]interface{}) {

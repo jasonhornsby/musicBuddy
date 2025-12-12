@@ -60,7 +60,10 @@ export class AudioWorkerManager {
 
     public createVisualizer(id: string, type: 'waveform', width: number) {
         // Create SAB for the output buffer
-        const sab = new SharedArrayBuffer(width * 4);
+        // What is the layout here?
+        // If we want to draw min - max bars we need to double the size of the bufer
+        // Buf if the zoom level is to high we need to draw the points directly, halving the bufer size
+        const sab = new SharedArrayBuffer(width * 4 * 2);
 
         // Create JS views into the SAB
         const floatView = new Float32Array(sab);
