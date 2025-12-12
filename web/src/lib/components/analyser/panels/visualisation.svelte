@@ -5,7 +5,7 @@
 	const audioContext = getAudioContext();
 	const workerManager = audioContext.getAudioWorkerManager();
 
-	const width = $state(800);
+	const width = 800;
 	const height = $state(300);
 	const vizData = workerManager.createVisualizer('test-viz', 'waveform', width);
 
