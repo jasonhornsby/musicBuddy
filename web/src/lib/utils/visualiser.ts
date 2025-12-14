@@ -79,8 +79,8 @@ export class WaveformVisualisation extends Visualisation {
         const barWidth = this.width / numBars;
 
         for (let i = 0; i < numBars; i++) {
-            const minVal = this.floatView[i * 2];
-            const maxVal = this.floatView[i * 2 + 1];
+            const minVal = this.floatView[i * 2] * window.devicePixelRatio;
+            const maxVal = this.floatView[i * 2 + 1] * window.devicePixelRatio;
 
             // Normalize values (assuming -1 to 1 range) to canvas coordinates
             const yMin = ((1 - minVal) / 2) * (this.ctx.canvas.height / window.devicePixelRatio);

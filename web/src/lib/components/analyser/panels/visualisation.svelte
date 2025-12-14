@@ -5,7 +5,7 @@
 	const audioContext = getAudioContext();
 	const workerManager = audioContext.getAudioWorkerManager();
 
-	const width = 800;
+	const width = 2000;
 	const height = $state(300);
 	const visualisation = new WaveformVisualisation(width);
 	workerManager.createVisualizer(visualisation);
@@ -58,7 +58,7 @@
 <div class="flex flex-col gap-4">
 	<canvas
 		bind:this={canvas}
-		style="width: {width}px; height: {height}px;"
-		class="rounded border border-neutral-700"
+		style="height: {height}px;"
+		class="rounded border border-neutral-700 w-full"
 	></canvas>
 </div>
