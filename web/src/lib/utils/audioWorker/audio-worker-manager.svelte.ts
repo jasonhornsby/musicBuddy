@@ -1,4 +1,5 @@
 import type { AudioBufferSetup } from "$lib/utils/audioBufferManager";
+import type { Visualisation } from "../visualiser";
 import AudioWorker from './audio.worker.ts?worker';
 
 export class AudioWorkerManager {
@@ -6,6 +7,7 @@ export class AudioWorkerManager {
     public isAudioLoaded = $state(false);
 
     private worker: Worker;
+    private visualisations: Record<string, Visualisation> = {};
 
     constructor() {
         this.worker = new AudioWorker();
@@ -25,6 +27,8 @@ export class AudioWorkerManager {
                     this.isAudioLoaded = true;
                     console.log('[TS] Audio loaded:', data);
                     break;
+                case 'viz_updated':
+                    this.visualisations[data.id].draw();
                 default:
                     console.warn(`Unknown message type: ${type}`);
             }
@@ -58,26 +62,14 @@ export class AudioWorkerManager {
         this.worker.terminate();
     }
 
-    public createVisualizer(id: string, type: 'waveform', width: number) {
-        // Create SAB for the output buffer
-        // What is the layout here?
-        // If we want to draw min - max bars we need to double the size of the bufer
-        // Buf if the zoom level is to high we need to draw the points directly, halving the bufer size
-        const sab = new SharedArrayBuffer(width * 4 * 2);
-
-        // Create JS views into the SAB
-        const floatView = new Float32Array(sab);
-        const uInt8View = new Uint8Array(sab);
-
-        // Create visualizer
+    public createVisualizer(visualisation: Visualisation) {
         this.worker.postMessage({
             type: 'create_viz',
-            id: id,
-            vizType: type,
-            buffer: uInt8View
+            id: visualisation.id,
+            vizType: visualisation.type,
+            buffer: visualisation.uInt8View
         });
-
-        return floatView;
+        this.visualisations[visualisation.id] = visualisation;
     }
 
     public updateVisualizer(id: string) {
