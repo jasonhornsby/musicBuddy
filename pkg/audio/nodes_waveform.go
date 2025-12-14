@@ -1,8 +1,8 @@
 package audio
 
 import (
-	"math"
 	"syscall/js"
+	"time"
 )
 
 type WaveVizNode struct {
@@ -10,7 +10,8 @@ type WaveVizNode struct {
 	input      Node
 	outputView js.Value
 
-	renderBuf []float32
+	renderBuf    []float32
+	cachedBufLen int
 }
 
 func NewWaveVizNode(id string, input Node) *WaveVizNode {
@@ -31,39 +32,84 @@ func (n *WaveVizNode) GetData() (interface{}, error) {
 
 func (n *WaveVizNode) BindOutput(bufferJs js.Value) {
 	n.outputView = bufferJs
+	n.cachedBufLen = bufferJs.Get("length").Int()
 }
 
 func (n *WaveVizNode) Update() {
-	// Get data from channel selector node
+	startTime := time.Now()
+
 	val, _ := n.input.GetData()
 	samples := val.([]float32)
+	totalSamples := len(samples)
 
-	// We have space for two points per pixel
-	outputCount := n.outputView.Get("length").Int() / 2
-
-	// Amount of points to render * 2 for min and max. Data is interleaved
-	outputLen := n.outputView.Get("length").Int()
+	// Use cached length
+	outputCount := n.cachedBufLen / 2
+	outputLen := n.cachedBufLen
 
 	if len(n.renderBuf) != outputLen {
 		n.renderBuf = make([]float32, outputLen)
 	}
 
-	step := len(samples) / outputCount
-	for i := 0; i < outputCount; i++ {
-		min := math.Inf(1)
-		max := math.Inf(-1)
-		for j := 0; j < step; j++ {
-			idx := i*step + j
-			if idx < len(samples) {
-				min = math.Min(float64(min), float64(samples[idx]))
-				max = math.Max(float64(max), float64(samples[idx]))
-			}
-		}
-		n.renderBuf[i*2] = float32(min)
-		n.renderBuf[i*2+1] = float32(max)
+	if outputCount == 0 {
+		return
 	}
 
-	js.CopyBytesToJS(n.outputView, Float32ToBytes(n.renderBuf))
+	// Calculate how many raw samples fit into one visual pixel column
+	step := totalSamples / outputCount
+
+	// We will never check more than this many samples per pixel column.
+	// Lower limit = faster but might miss interesting peak
+	const maxSamplesPerPixel = 100
+
+	// Calculate the Stride (Skip Rate)
+	stride := 1
+	if step > maxSamplesPerPixel {
+		stride = step / maxSamplesPerPixel
+	}
+
+	readIdx := 0
+	writeIdx := 0
+
+	for range outputCount {
+		end := min(readIdx+step, totalSamples)
+		chunk := samples[readIdx:end]
+
+		var min float32 = 2.0
+		var max float32 = -2.0
+
+		foundAny := false
+
+		for k := 0; k < len(chunk); k += stride {
+			val := chunk[k]
+			if val < min {
+				min = val
+			}
+			if val > max {
+				max = val
+			}
+			foundAny = true
+		}
+
+		// Fallback for silence/empty chunks
+		if !foundAny {
+			min = 0
+			max = 0
+		}
+
+		n.renderBuf[writeIdx] = min
+		n.renderBuf[writeIdx+1] = max
+		writeIdx += 2
+
+		readIdx = end
+	}
 
 	n.isDirty = false
+
+	// Fast cast to bytes
+	js.CopyBytesToJS(n.outputView, Float32ToBytes(n.renderBuf))
+
+	// Performance logging
+	dur := time.Since(startTime)
+	actualScanned := outputCount * (step / stride)
+	println("[GO] Waveform Update took:", dur.Milliseconds(), "ms. Samples scanned:", actualScanned)
 }

@@ -59,6 +59,9 @@ func handleUpdateViz(data js.Value) {
 	println("[Go] Updating visualizer")
 	id := data.Get("id").String()
 	pipelineManager.UpdateViz(id)
+	postMessage("viz_updated", map[string]interface{}{
+		"id": id,
+	})
 }
 
 func handleCreateViz(data js.Value) {
@@ -69,7 +72,13 @@ func handleCreateViz(data js.Value) {
 
 	pipelineManager.CreateVisualizer(id, vizType)
 	pipelineManager.BindVizBuffer(id, buffer)
+	postMessage("viz_created", map[string]interface{}{
+		"id": id,
+	})
 	pipelineManager.UpdateViz(id)
+	postMessage("viz_updated", map[string]interface{}{
+		"id": id,
+	})
 }
 
 func postMessage(msgType string, payload map[string]interface{}) {

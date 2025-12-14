@@ -10,13 +10,32 @@
 	const vizData = workerManager.createVisualizer('test-viz', 'waveform', width);
 
 	let canvas = $state<HTMLCanvasElement | null>(null);
-	let animationId = $state<number | null>(null);
+	let dpr = $state(typeof window !== 'undefined' ? window.devicePixelRatio : 1);
+
+	function setupCanvas() {
+		if (!canvas) return null;
+
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return null;
+
+		// Set the canvas buffer size scaled by DPI
+		canvas.width = width * dpr;
+		canvas.height = height * dpr;
+
+		// Scale the context to account for DPI
+		ctx.scale(dpr, dpr);
+
+		return ctx;
+	}
 
 	function draw() {
 		if (!canvas) return;
 
 		const ctx = canvas.getContext('2d');
 		if (!ctx) return;
+
+		// Reset transform and reapply DPI scaling
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
 		// Clear canvas
 		ctx.fillStyle = '#1a1a1a';
@@ -46,35 +65,26 @@
 		}
 	}
 
-	function loop() {
-		workerManager.updateVisualizer('test-viz');
-		draw();
-	}
-
-	function startLoop() {
-		if (animationId === null) {
-			loop();
-		}
-	}
-
-	function stopLoop() {
-		if (animationId !== null) {
-			cancelAnimationFrame(animationId);
-			animationId = null;
-		}
-	}
-
 	function updateViz() {
 		workerManager.updateVisualizer('test-viz');
 		draw();
 	}
+
+	$effect(() => {
+		if (canvas) {
+			setupCanvas();
+			draw();
+		}
+	});
 </script>
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-2">
 		<Button onclick={updateViz}>UpdateViz</Button>
-		<Button onclick={startLoop}>Start</Button>
-		<Button onclick={stopLoop}>Stop</Button>
 	</div>
-	<canvas bind:this={canvas} {width} {height} class="rounded border border-neutral-700"></canvas>
+	<canvas
+		bind:this={canvas}
+		style="width: {width}px; height: {height}px;"
+		class="rounded border border-neutral-700"
+	></canvas>
 </div>

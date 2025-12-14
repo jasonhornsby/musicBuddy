@@ -4,6 +4,7 @@ declare global {
     class Go {
         importObject: WebAssembly.Imports;
         run(instance: WebAssembly.Instance): Promise<void>;
+        env: Record<string, string>;
     }
 }
 
@@ -11,6 +12,7 @@ declare global {
 console.log('[Worker] Starting wasm initialization...');
 
 const go = new Go();
+go.env = Object.assign({ GODEBUG: "gctrace=1" }, go.env);
 let goReady = false;
 
 WebAssembly.instantiateStreaming(fetch('/main.wasm'), go.importObject)
