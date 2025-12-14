@@ -71,22 +71,73 @@ export class WaveformVisualisation extends Visualisation {
         if (!this.ctx) {
             throw new Error('Context not registered');
         }
+
+        const dpr = window.devicePixelRatio;
+        const canvasHeight = this.ctx.canvas.height / dpr;
+        const canvasWidth = this.ctx.canvas.width / dpr;
+
+        // Scale configuration
+        const scaleWidth = 40;
+        const tickLength = 6;
+        const scaleValues = [1, 0.5, 0, -0.5, -1];
+
+        // Draw scale background
+        this.ctx.fillStyle = '#1a1a1a';
+        this.ctx.fillRect(0, 0, scaleWidth, canvasHeight);
+
+        // Draw scale line
+        this.ctx.strokeStyle = '#666';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.moveTo(scaleWidth, 0);
+        this.ctx.lineTo(scaleWidth, canvasHeight);
+        this.ctx.stroke();
+
+        // Draw tick marks and labels
+        this.ctx.fillStyle = '#aaa';
+        this.ctx.font = '10px monospace';
+        this.ctx.textAlign = 'right';
+
+        for (const value of scaleValues) {
+            const y = ((1 - value) / 2) * canvasHeight;
+
+            // Draw tick mark
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaleWidth - tickLength, y);
+            this.ctx.lineTo(scaleWidth, y);
+            this.ctx.stroke();
+
+            // Adjust text baseline so edge labels aren't cut off
+            if (value === 1) {
+                this.ctx.textBaseline = 'top';
+            } else if (value === -1) {
+                this.ctx.textBaseline = 'bottom';
+            } else {
+                this.ctx.textBaseline = 'middle';
+            }
+
+            // Draw label
+            const label = value > 0 ? `+${value}` : value.toString();
+            this.ctx.fillText(label, scaleWidth - tickLength - 2, y);
+        }
+
         // Draw min/max bars (data is interleaved: [min, max, min, max, ...])
         this.ctx.strokeStyle = '#00ff88';
         this.ctx.lineWidth = 1;
 
         const numBars = this.floatView.length / 2;
-        const barWidth = this.width / numBars;
+        const waveformWidth = canvasWidth - scaleWidth;
+        const barWidth = waveformWidth / numBars;
 
         for (let i = 0; i < numBars; i++) {
-            const minVal = this.floatView[i * 2] * window.devicePixelRatio;
-            const maxVal = this.floatView[i * 2 + 1] * window.devicePixelRatio;
+            const minVal = this.floatView[i * 2];
+            const maxVal = this.floatView[i * 2 + 1];
 
             // Normalize values (assuming -1 to 1 range) to canvas coordinates
-            const yMin = ((1 - minVal) / 2) * (this.ctx.canvas.height / window.devicePixelRatio);
-            const yMax = ((1 - maxVal) / 2) * (this.ctx.canvas.height / window.devicePixelRatio);
+            const yMin = ((1 - minVal) / 2) * canvasHeight;
+            const yMax = ((1 - maxVal) / 2) * canvasHeight;
 
-            const x = i * barWidth + barWidth / 2;
+            const x = scaleWidth + i * barWidth + barWidth / 2;
 
             this.ctx.beginPath();
             this.ctx.moveTo(x, yMin);
