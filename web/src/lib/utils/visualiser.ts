@@ -129,9 +129,16 @@ export class WaveformVisualisation extends Visualisation {
         const waveformWidth = canvasWidth - scaleWidth;
         const barWidth = waveformWidth / numBars;
 
+        let minPoint = Number.POSITIVE_INFINITY;
+        let maxPoint = Number.NEGATIVE_INFINITY;
+
         for (let i = 0; i < numBars; i++) {
             const minVal = this.floatView[i * 2];
             const maxVal = this.floatView[i * 2 + 1];
+
+            // Track smallest and largest values
+            if (minVal < minPoint) minPoint = minVal;
+            if (maxVal > maxPoint) maxPoint = maxVal;
 
             // Normalize values (assuming -1 to 1 range) to canvas coordinates
             const yMin = ((1 - minVal) / 2) * canvasHeight;
@@ -144,5 +151,7 @@ export class WaveformVisualisation extends Visualisation {
             this.ctx.lineTo(x, yMax);
             this.ctx.stroke();
         }
+
+        console.log('Waveform smallest value:', minPoint, 'largest value:', maxPoint);
     }
 }

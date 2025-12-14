@@ -53,6 +53,7 @@ export class AudioBufferManager {
 
     async loadAudio(arrayBuffer: ArrayBuffer): Promise<AudioBufferSetup> {
         const rawMp3ArrayBuffer = arrayBuffer;
+        console.log(rawMp3ArrayBuffer);
         const rawMp3Size = rawMp3ArrayBuffer.byteLength;
 
         // Setup SAB for raw Mp3 data
@@ -87,7 +88,13 @@ export class AudioBufferManager {
             channelView.set(channelData);
             decodedChannelSABs.push(channelSAB);
 
-            console.log(`Decoded channel ${channel}: ${channelSAB.byteLength} bytes`);
+            // Calculate min and max for the channel data
+            let min = Infinity, max = -Infinity;
+            for (let i = 0; i < channelData.length; i++) {
+                if (channelData[i] < min) min = channelData[i];
+                if (channelData[i] > max) max = channelData[i];
+            }
+            console.log(`Decoded channel ${channel}: ${channelSAB.byteLength} bytes, min=${min}, max=${max}`);
         }
         const audioBufferSetup: AudioBufferSetup = {
             rawMp3SAB,

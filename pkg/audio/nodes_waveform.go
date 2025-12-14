@@ -1,6 +1,7 @@
 package audio
 
 import (
+	"fmt"
 	"syscall/js"
 	"time"
 )
@@ -59,7 +60,7 @@ func (n *WaveVizNode) Update() {
 
 	// We will never check more than this many samples per pixel column.
 	// Lower limit = faster but might miss interesting peak
-	const maxSamplesPerPixel = 100
+	const maxSamplesPerPixel = 50
 
 	// Calculate the Stride (Skip Rate)
 	stride := 1
@@ -69,6 +70,9 @@ func (n *WaveVizNode) Update() {
 
 	readIdx := 0
 	writeIdx := 0
+
+	var globalMin float32 = 2.0
+	var globalMax float32 = -2.0
 
 	for range outputCount {
 		end := min(readIdx+step, totalSamples)
@@ -100,6 +104,13 @@ func (n *WaveVizNode) Update() {
 		n.renderBuf[writeIdx+1] = max
 		writeIdx += 2
 
+		if min < globalMin {
+			globalMin = min
+		}
+		if max > globalMax {
+			globalMax = max
+		}
+
 		readIdx = end
 	}
 
@@ -112,4 +123,5 @@ func (n *WaveVizNode) Update() {
 	dur := time.Since(startTime)
 	actualScanned := outputCount * (step / stride)
 	println("[GO] Waveform Update took:", dur.Milliseconds(), "ms. Samples scanned:", actualScanned)
+	fmt.Printf("[GO] Output buffer range - smallest: %f, largest: %f\n", globalMin, globalMax)
 }

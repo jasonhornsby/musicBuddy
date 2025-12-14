@@ -6,7 +6,7 @@
 	const workerManager = audioContext.getAudioWorkerManager();
 
 	const width = 2000;
-	const height = $state(300);
+	const height = $state(200);
 	const visualisation = new WaveformVisualisation(width);
 	workerManager.createVisualizer(visualisation);
 
@@ -52,6 +52,24 @@
 			setupCanvas();
 			draw();
 		}
+	});
+
+	$effect(() => {
+		if (!canvas) return;
+
+		const resizeObserver = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				if (entry.target === canvas) {
+					draw();
+				}
+			}
+		});
+
+		resizeObserver.observe(canvas);
+
+		return () => {
+			resizeObserver.disconnect();
+		};
 	});
 </script>
 

@@ -1,16 +1,23 @@
 package audio
 
 import (
-	"reflect"
+	"encoding/binary"
+	"math"
 	"syscall/js"
 	"unsafe"
 )
 
 func Float32ToBytes(floats []float32) []byte {
-	header := *(*reflect.SliceHeader)(unsafe.Pointer(&floats))
-	header.Len *= 4
-	header.Cap *= 4
-	return *(*[]byte)(unsafe.Pointer(&header))
+	return unsafe.Slice((*byte)(unsafe.Pointer(&floats[0])), len(floats)*4)
+}
+
+func BytesToFloat32Slice(b []byte) []float32 {
+	floats := make([]float32, len(b)/4)
+	for i := range floats {
+		bits := binary.LittleEndian.Uint32(b[i*4:])
+		floats[i] = math.Float32frombits(bits)
+	}
+	return floats
 }
 
 type Node interface {
