@@ -20,7 +20,7 @@ func NewPipelineManager(source *Manager) *PipelineManager {
 }
 
 func (pm *PipelineManager) GetChannelNode(mode ChannelMode) Node {
-	key := fmt.Sprintf("channel_%s", mode)
+	key := fmt.Sprintf("channel_%d", mode)
 	if node, ok := pm.sharedNodes[key]; ok {
 		return node
 	}

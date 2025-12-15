@@ -5,8 +5,10 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Analyser } from '$lib/components/analyser';
 	import * as Card from '$lib/components/ui/card';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Music, CloudUpload, PlayCircle } from 'lucide-svelte';
 	import { setAudioContext } from '$lib/context/audio.svelte.js';
+	import Core from '$lib/components/analyser/core.svelte';
 
 	const { data } = $props();
 
@@ -37,6 +39,17 @@
 	}
 </script>
 
+{#if !audioContext.isWorkerReady}
+	<div
+		class="min-h-screen w-full flex items-center justify-center p-6 bg-linear-to-br from-background via-background to-muted/30"
+	>
+		<Spinner class="size-8 text-primary" />
+	</div>
+{:else}
+	<Core />
+{/if}
+
+<!--
 {#if !audioContext.isAudioLoaded}
 	<div
 		class="min-h-screen w-full flex items-center justify-center p-6 bg-linear-to-br from-background via-background to-muted/30"
@@ -63,7 +76,7 @@
 						</span>
 					</div>
 				{:else}
-					<!-- Upload Zone -->
+					
 					<button
 						type="button"
 						class="group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/60 bg-muted/30 p-8 transition-all hover:border-primary/50 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring {isDragging
@@ -107,7 +120,7 @@
 						<Separator class="flex-1" />
 					</div>
 
-					<!-- Demo Files -->
+					
 					<div class="grid grid-cols-2 gap-3">
 						{#each data.demoFiles as demoFile}
 							<Button
@@ -125,5 +138,9 @@
 		</Card.Root>
 	</div>
 {:else}
-	<Analyser />
+	<Tooltip.Provider delayDuration={0}>
+		<Analyser />
+	</Tooltip.Provider>
 {/if}
+
+-->
