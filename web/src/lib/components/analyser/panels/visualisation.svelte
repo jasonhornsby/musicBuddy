@@ -2,17 +2,22 @@
 	import { getAudioContext } from "$lib/context/audio.svelte";
 	import { WaveformVisualisation } from "$lib/utils/visualiser";
 
-	const audioContext = getAudioContext();
-	const workerManager = audioContext.getAudioWorkerManager();
+const audioContext = getAudioContext();
+const workerManager = audioContext.getAudioWorkerManager();
 
-	const visualisation = new WaveformVisualisation(300);
+// Width of the left-hand legend/scale area in the waveform visualisation
+// Keep this in sync with `scaleTotalWidth` in `WaveformVisualisation.draw`
+const LEGEND_WIDTH = 24;
+
+const visualisation = new WaveformVisualisation(300);
 	
 	workerManager.createVisualizer(visualisation);
 
-	let canvas = $state<HTMLCanvasElement | null>(null);
-	let dpr = $state(typeof window !== 'undefined' ? window.devicePixelRatio : 1);
-	let canvasWidth = $state(0);
-	let canvasHeight = $state(0);
+let canvas = $state<HTMLCanvasElement | null>(null);
+let dpr = $state(typeof window !== 'undefined' ? window.devicePixelRatio : 1);
+let canvasWidth = $state(0);
+let canvasHeight = $state(0);
+let hoverX = $state<number | null>(null);
 
 	function setupCanvas() {
 		if (!canvas) return null;
@@ -40,21 +45,58 @@
 		return ctx;
 	}
 
-	function draw() {
-		if (!canvas) return;
+function draw() {
+	if (!canvas) return;
 
-		const ctx = canvas.getContext('2d');
-		if (!ctx) return;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return;
 
 	// Ensure the buffer matches the current element size (handles resizes).
 	setupCanvas();
 
-		// Clear canvas (matching track.svelte white background)
-		ctx.fillStyle = '#ffffff';
-		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+	// Clear canvas (matching track.svelte white background)
+	ctx.fillStyle = '#ffffff';
+	ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-		visualisation.draw();
+	visualisation.draw();
+
+	// Draw subtle vertical hover bar from top to bottom
+	if (hoverX !== null) {
+		ctx.save();
+		ctx.strokeStyle = '#9ca3af'; // neutral-400 for subtle line
+		ctx.globalAlpha = 0.4;
+		ctx.lineWidth = 1;
+		ctx.setLineDash([3, 3]);
+		ctx.beginPath();
+		ctx.moveTo(hoverX + 0.5, 0);
+		ctx.lineTo(hoverX + 0.5, canvasHeight);
+		ctx.stroke();
+		ctx.restore();
 	}
+}
+
+function handlePointerMove(event: PointerEvent) {
+	if (!canvas) return;
+
+	const rect = canvas.getBoundingClientRect();
+	const x = event.clientX - rect.left;
+
+	// If hovering over the legend area, don't show the hover line
+	if (x < LEGEND_WIDTH) {
+		hoverX = null;
+		draw();
+		return;
+	}
+
+	// Clamp the hover line to only appear over the waveform area (not the legend)
+	hoverX = Math.max(LEGEND_WIDTH, Math.min(canvasWidth, x));
+	draw();
+}
+
+function handlePointerLeave() {
+	hoverX = null;
+	draw();
+}
 
 	$effect(() => {
 		if (canvas) {
@@ -83,4 +125,9 @@
 	});
 </script>
 
-<canvas bind:this={canvas} class="w-full h-full"></canvas>
+<canvas
+	bind:this={canvas}
+	class="w-full h-full"
+	on:pointermove={handlePointerMove}
+	on:pointerleave={handlePointerLeave}
+></canvas>
