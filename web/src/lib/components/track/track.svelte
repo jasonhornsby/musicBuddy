@@ -29,10 +29,10 @@
 </script>
 
 <div
-	class="h-[280px] w-full rounded-lg border border-slate-200 bg-white flex flex-row overflow-hidden shadow-sm"
+	class="h-[280px] w-full rounded-lg border border-slate-200 bg-white flex flex-col md:flex-row overflow-hidden shadow-sm"
 >
 	<aside
-		class="w-48 max-w-[28%] border-r border-slate-200 bg-slate-50/80 text-[11px] flex flex-col"
+		class="w-full md:w-48 md:max-w-[28%] border-r border-slate-200 bg-slate-50/80 text-[11px] flex flex-col"
 	>
 		<div class="flex items-center justify-between gap-1.5 px-2 py-2 border-b border-slate-100">
 			<div class="flex flex-col gap-0.5 min-w-0">
@@ -87,10 +87,14 @@
 						Mix
 					</Button>
 				</ButtonGroup>
+				<span class="text-[10px] font-medium text-slate-500 uppercase tracking-[0.14em]">
+					Waveform
+				</span>
+				<span>Target points</span>
 			</div>
 		</div>
 	</aside>
-	<div class="flex-1">
+	<div class="flex-[300px] h-[300px] md:h-auto md:flex-1">
 		<Visualisation {visualisation} />
 	</div>
 </div>
