@@ -128,6 +128,6 @@ function handlePointerLeave() {
 <canvas
 	bind:this={canvas}
 	class="w-full h-full"
-	on:pointermove={handlePointerMove}
-	on:pointerleave={handlePointerLeave}
+	onpointermove={handlePointerMove}
+	onpointerleave={handlePointerLeave}
 ></canvas>
