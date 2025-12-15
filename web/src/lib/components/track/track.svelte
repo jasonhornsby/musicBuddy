@@ -9,9 +9,23 @@
 		DropdownMenuContent,
 		DropdownMenuItem,
 	} from "../ui/dropdown-menu";
+	import type { ChannelMode } from "$lib/types/nodeConfig";
+	import { getAudioContext } from "$lib/context/audio.svelte";
+	import { WaveformVisualisation } from "$lib/utils/visualiser";
+
+
+	const audioContext = getAudioContext();
+	const workerManager = audioContext.getAudioWorkerManager();
+	const visualisation = new WaveformVisualisation(300);
+	workerManager.createVisualizer(visualisation);
 
 	const trackName = $state("Track 1");
-	let channel = $state<"left" | "right" | "mono">("mono");
+
+	let channel = $state<ChannelMode>('mix');
+
+	$effect(() => {
+		visualisation.updateConfig({ channel})
+	});
 </script>
 
 <div
@@ -65,18 +79,18 @@
 						Right
 					</Button>
 					<Button
-						variant={channel === 'mono' ? 'default' : 'outline'}
+						variant={channel === 'mix' ? 'default' : 'outline'}
 						size="sm"
 						class="flex-1 text-[11px] px-1.5"
-						onclick={() => (channel = 'mono')}
+						onclick={() => (channel = 'mix')}
 					>
-						Mono
+						Mix
 					</Button>
 				</ButtonGroup>
 			</div>
 		</div>
 	</aside>
 	<div class="flex-1">
-		<Visualisation />
+		<Visualisation {visualisation} />
 	</div>
 </div>

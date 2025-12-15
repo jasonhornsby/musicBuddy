@@ -36,6 +36,15 @@ func (n *WaveVizNode) BindOutput(bufferJs js.Value) {
 	n.cachedBufLen = bufferJs.Get("length").Int()
 }
 
+func (n *WaveVizNode) GetInput() Node {
+	return n.input
+}
+
+func (n *WaveVizNode) SetInput(input Node) {
+	n.input = input
+	n.isDirty = true
+}
+
 func (n *WaveVizNode) Update() {
 	startTime := time.Now()
 

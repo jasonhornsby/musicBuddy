@@ -30,13 +30,46 @@ func (pm *PipelineManager) GetChannelNode(mode ChannelMode) Node {
 	return node
 }
 
-func (pm *PipelineManager) CreateVisualizer(id string, vizType string) {
-	audioSrc := pm.GetChannelNode(ChannelMix)
-
+func (pm *PipelineManager) CreateVisualizer(id string, vizType string, cfg NodeConfig) {
 	if vizType == "waveform" {
+		waveCfg, ok := cfg.(WaveformConfig)
+		if !ok {
+			panic("invalid waveform configuration")
+		}
+		audioSrc := pm.GetChannelNode(waveCfg.Channel)
 		node := NewWaveVizNode(id, audioSrc)
 		pm.nodes[id] = node
 	}
+}
+
+// TODO: The cfg should not be a WaveformConfig, but a NodeConfig
+// This way we can use the same function to configure any visualizer node
+func (pm *PipelineManager) ConfigureVizNode(id string, cfg WaveformConfig) error {
+	node, ok := pm.nodes[id]
+	if !ok {
+		return fmt.Errorf("visualizer not found: %s", id)
+	}
+
+	waveNode, ok := node.(*WaveVizNode)
+	if !ok {
+		return fmt.Errorf("node is not a WaveVizNode: %s", id)
+	}
+
+	// Get the new channel node
+	newInput := pm.GetChannelNode(cfg.Channel)
+	oldInput := waveNode.GetInput()
+
+	// Skip if same input
+	if oldInput.GetId() == newInput.GetId() {
+		return nil
+	}
+
+	// Rewire: disconnect from old, connect to new
+	oldInput.RemoveDownstream(waveNode)
+	newInput.AddDownstream(waveNode)
+	waveNode.SetInput(newInput)
+
+	return nil
 }
 
 func (pm *PipelineManager) BindVizBuffer(id string, buffer js.Value) {

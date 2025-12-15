@@ -1,5 +1,6 @@
 import type { AudioBufferSetup } from "$lib/utils/audioBufferManager";
 import type { Visualisation } from "../visualiser";
+import type { BaseVizConfig } from "$lib/types/nodeConfig";
 import AudioWorker from './audio.worker.ts?worker';
 
 export class AudioWorkerManager {
@@ -29,6 +30,11 @@ export class AudioWorkerManager {
                     break;
                 case 'viz_updated':
                     this.visualisations[data.id].draw();
+                    break;
+                case 'viz_configured':
+                    // Config applied, now trigger an update to refresh the viz
+                    this.updateVisualizer(data.id);
+                    break;
                 default:
                     console.warn(`Unknown message type: ${type}`);
             }
@@ -67,9 +73,23 @@ export class AudioWorkerManager {
             type: 'create_viz',
             id: visualisation.id,
             vizType: visualisation.type,
-            buffer: visualisation.uInt8View
+            buffer: visualisation.uInt8View,
+            config: visualisation.config
         });
         this.visualisations[visualisation.id] = visualisation;
+
+        // Wire up config change handler
+        visualisation.registerConfigChangeHandler((config) => {
+            this.configureVisualizer(visualisation.id, config);
+        });
+    }
+
+    public configureVisualizer(id: string, config: BaseVizConfig) {
+        this.worker.postMessage({
+            type: 'configure_viz',
+            id: id,
+            config: config
+        });
     }
 
     public updateVisualizer(id: string) {

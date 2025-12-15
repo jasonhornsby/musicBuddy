@@ -24,6 +24,7 @@ type Node interface {
 	GetId() string
 	Invalidate()
 	AddDownstream(n Node)
+	RemoveDownstream(n Node)
 	GetData() (interface{}, error)
 }
 
@@ -55,4 +56,13 @@ func (n *BaseNode) Invalidate() {
 
 func (bn *BaseNode) AddDownstream(n Node) {
 	bn.downstream = append(bn.downstream, n)
+}
+
+func (bn *BaseNode) RemoveDownstream(n Node) {
+	for i, child := range bn.downstream {
+		if child.GetId() == n.GetId() {
+			bn.downstream = append(bn.downstream[:i], bn.downstream[i+1:]...)
+			return
+		}
+	}
 }

@@ -1,4 +1,6 @@
-export abstract class Visualisation {
+import type { BaseVizConfig } from '$lib/types/nodeConfig';
+
+export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfig> {
     id: string;
     type: string;
     // Width of the output buffer not the visualisation itself
@@ -12,6 +14,8 @@ export abstract class Visualisation {
     private buffer: SharedArrayBuffer | null = null;
     private _floatView: Float32Array | null = null;
     private _uInt8View: Uint8Array | null = null;
+    private _config: TConfig;
+    private onConfigChange?: (config: TConfig) => void;
 
     get floatView(): Float32Array {
         return this._floatView as Float32Array;
@@ -29,10 +33,15 @@ export abstract class Visualisation {
         this._uInt8View = value;
     }
 
-    constructor(id: string, type: string, requestedDatapoints: number) {
+    get config(): TConfig {
+        return this._config;
+    }
+
+    constructor(id: string, type: string, requestedDatapoints: number, defaultConfig: TConfig) {
         this.id = id;
         this.type = type;
         this.requestedDatapoints = requestedDatapoints;
+        this._config = defaultConfig;
         this.createBuffer();
     }
 
@@ -55,15 +64,36 @@ export abstract class Visualisation {
     public registerContext(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
     }
+
+    public updateConfig(newConfig: Partial<TConfig>) {
+        this._config = { ...this._config, ...newConfig };
+        this.onConfigChange?.(this._config);
+    }
+
+    public registerConfigChangeHandler(handler: (config: TConfig) => void) {
+        this.onConfigChange = handler;
+    }
 }
 
 
-export class WaveformVisualisation extends Visualisation {
-    constructor(requestedDatapoints: number) {
-        super(`waveform-${Math.random().toString(36).substring(2, 15)}`, 'waveform', requestedDatapoints);
+import type { WaveformConfig } from '$lib/types/nodeConfig';
+
+export class WaveformVisualisation extends Visualisation<WaveformConfig> {
+    constructor(requestedDatapoints: number, config?: Partial<WaveformConfig>) {
+        const defaultConfig: WaveformConfig = {
+            channel: 'mix',
+            ...config
+        };
+        super(
+            `waveform-${Math.random().toString(36).substring(2, 15)}`,
+            'waveform',
+            requestedDatapoints,
+            defaultConfig
+        );
     }
 
     public getBufferSize(): number {
+        // 4 bytes per float, 2 floats per sample (min, max)
         return this.requestedDatapoints * 4 * 2;
     }
 
@@ -71,6 +101,9 @@ export class WaveformVisualisation extends Visualisation {
         if (!this.ctx) {
             throw new Error('Context not registered');
         }
+
+        // Clear the entire canvas before redrawing
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         const dpr = window.devicePixelRatio;
         const canvasHeight = this.ctx.canvas.height / dpr;

@@ -29,6 +29,8 @@ func onMessage(this js.Value, args []js.Value) interface{} {
 		handleCreateViz(data)
 	case "update_viz":
 		handleUpdateViz(data)
+	case "configure_viz":
+		handleConfigureViz(data)
 
 	default:
 		println("[Go] Unknown message type: ", msgType)
@@ -69,8 +71,13 @@ func handleCreateViz(data js.Value) {
 	id := data.Get("id").String()
 	vizType := data.Get("vizType").String()
 	buffer := data.Get("buffer")
+	configJS := data.Get("config")
 
-	pipelineManager.CreateVisualizer(id, vizType)
+	cfg := audio.WaveformConfig{
+		Channel: parseChannelMode(configJS.Get("channel").String()),
+	}
+
+	pipelineManager.CreateVisualizer(id, vizType, cfg)
 	pipelineManager.BindVizBuffer(id, buffer)
 	postMessage("viz_created", map[string]interface{}{
 		"id": id,
@@ -79,6 +86,38 @@ func handleCreateViz(data js.Value) {
 	postMessage("viz_updated", map[string]interface{}{
 		"id": id,
 	})
+}
+
+func handleConfigureViz(data js.Value) {
+	println("[Go] Configuring visualizer")
+	id := data.Get("id").String()
+	configJS := data.Get("config")
+
+	cfg := audio.WaveformConfig{
+		Channel: parseChannelMode(configJS.Get("channel").String()),
+	}
+
+	err := pipelineManager.ConfigureVizNode(id, cfg)
+	if err != nil {
+		postMessage("error", map[string]interface{}{
+			"message": err.Error(),
+		})
+		return
+	}
+	postMessage("viz_configured", map[string]interface{}{
+		"id": id,
+	})
+}
+
+func parseChannelMode(s string) audio.ChannelMode {
+	switch s {
+	case "left":
+		return audio.ChannelLeft
+	case "right":
+		return audio.ChannelRight
+	default:
+		return audio.ChannelMix
+	}
 }
 
 func postMessage(msgType string, payload map[string]interface{}) {
