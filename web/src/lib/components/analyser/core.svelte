@@ -1,5 +1,5 @@
 <script>
-	import { CloudUpload, Music } from "lucide-svelte";
+	import { CloudUpload, Music, Plus } from "lucide-svelte";
 	import Button from "../ui/button/button.svelte";
 	import Track from "../track/track.svelte";
 	import AddTrack from "../track/add-track.svelte";
@@ -31,7 +31,9 @@
 			<MenubarMenu>
 				<MenubarTrigger>Tracks</MenubarTrigger>
 				<MenubarContent>
-					<MenubarItem onclick={() => (addTrackOpen = true)}>Add track</MenubarItem>
+					<MenubarItem onclick={() => (addTrackOpen = true)} disabled={audioContext.isAudioLoaded}>
+						<Plus /> Add track
+					</MenubarItem>
 				</MenubarContent>
 			</MenubarMenu>
 		</Menubar>

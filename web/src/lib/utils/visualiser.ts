@@ -6,7 +6,7 @@ export abstract class Visualisation {
     // We don't want to resise the buffer each time we resize the screen but for big screen width we 
     // still need a large buffer so we have something to display
     // The JS code takes this layout and draws the visualisation. The buffer does not contain the bitmap of the viz
-    width: number;
+    requestedDatapoints: number;
     ctx: CanvasRenderingContext2D | null = null;
 
     private buffer: SharedArrayBuffer | null = null;
@@ -29,10 +29,10 @@ export abstract class Visualisation {
         this._uInt8View = value;
     }
 
-    constructor(id: string, type: string, width: number) {
+    constructor(id: string, type: string, requestedDatapoints: number) {
         this.id = id;
         this.type = type;
-        this.width = width;
+        this.requestedDatapoints = requestedDatapoints;
         this.createBuffer();
     }
 
@@ -59,12 +59,12 @@ export abstract class Visualisation {
 
 
 export class WaveformVisualisation extends Visualisation {
-    constructor(width: number) {
-        super(`waveform-${Math.random().toString(36).substring(2, 15)}`, 'waveform', width);
+    constructor(requestedDatapoints: number) {
+        super(`waveform-${Math.random().toString(36).substring(2, 15)}`, 'waveform', requestedDatapoints);
     }
 
     public getBufferSize(): number {
-        return this.width * 4 * 2;
+        return this.requestedDatapoints * 4 * 2;
     }
 
     public draw(): void {
@@ -77,56 +77,89 @@ export class WaveformVisualisation extends Visualisation {
         const canvasWidth = this.ctx.canvas.width / dpr;
 
         // Scale configuration
-        const scaleWidth = 40;
+        const scaleWidth = 20;
+        const scalePadding = 4;
+        const scaleTotalWidth = scaleWidth + scalePadding;
         const tickLength = 6;
+        const subTickLength = 3;
         const scaleValues = [1, 0.5, 0, -0.5, -1];
+        const subTickValues = [0.75, 0.25, -0.25, -0.75];
+        const verticalPadding = 6;
 
-        // Draw scale background
-        this.ctx.fillStyle = '#1a1a1a';
-        this.ctx.fillRect(0, 0, scaleWidth, canvasHeight);
+        // Draw scale background (matching track.svelte slate-50/80 background)
+        this.ctx.fillStyle = '#f8fafc';
+        this.ctx.fillRect(0, 0, scaleTotalWidth, canvasHeight);
 
-        // Draw scale line
-        this.ctx.strokeStyle = '#666';
+        // Draw scale line (matching track.svelte slate-200 border)
+        this.ctx.strokeStyle = '#e2e8f0';
         this.ctx.lineWidth = 1;
         this.ctx.beginPath();
-        this.ctx.moveTo(scaleWidth, 0);
-        this.ctx.lineTo(scaleWidth, canvasHeight);
+        this.ctx.moveTo(scaleTotalWidth, 0);
+        this.ctx.lineTo(scaleTotalWidth, canvasHeight);
         this.ctx.stroke();
 
-        // Draw tick marks and labels
-        this.ctx.fillStyle = '#aaa';
-        this.ctx.font = '10px monospace';
+        // Draw faint horizontal gridlines for main ticks
+        this.ctx.strokeStyle = '#f1f5f9';
+        this.ctx.lineWidth = 0.5;
+        for (const value of scaleValues) {
+            const y = ((1 - value) / 2) * (canvasHeight - verticalPadding * 2) + verticalPadding;
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaleTotalWidth, y);
+            this.ctx.lineTo(canvasWidth, y);
+            this.ctx.stroke();
+        }
+
+        // Draw even fainter horizontal gridlines for sub-ticks
+        this.ctx.strokeStyle = '#f8fafc';
+        this.ctx.lineWidth = 0.5;
+        for (const value of subTickValues) {
+            const y = ((1 - value) / 2) * (canvasHeight - verticalPadding * 2) + verticalPadding;
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaleTotalWidth, y);
+            this.ctx.lineTo(canvasWidth, y);
+            this.ctx.stroke();
+        }
+
+        // Draw tick marks and labels (matching track.svelte slate-800 text)
+        this.ctx.fillStyle = '#1e293b';
+        this.ctx.font = '6px system-ui, -apple-system, sans-serif';
         this.ctx.textAlign = 'right';
 
         for (const value of scaleValues) {
-            const y = ((1 - value) / 2) * canvasHeight;
+            const y = ((1 - value) / 2) * (canvasHeight - verticalPadding * 2) + verticalPadding;
 
-            // Draw tick mark
+            // Draw tick mark (matching track.svelte slate-200 border)
+            this.ctx.strokeStyle = '#cbd5e1';
             this.ctx.beginPath();
-            this.ctx.moveTo(scaleWidth - tickLength, y);
-            this.ctx.lineTo(scaleWidth, y);
+            this.ctx.moveTo(scaleTotalWidth - tickLength, y);
+            this.ctx.lineTo(scaleTotalWidth, y);
             this.ctx.stroke();
+            this.ctx.textBaseline = 'middle';
 
-            // Adjust text baseline so edge labels aren't cut off
-            if (value === 1) {
-                this.ctx.textBaseline = 'top';
-            } else if (value === -1) {
-                this.ctx.textBaseline = 'bottom';
-            } else {
-                this.ctx.textBaseline = 'middle';
-            }
 
             // Draw label
             const label = value > 0 ? `+${value}` : value.toString();
-            this.ctx.fillText(label, scaleWidth - tickLength - 2, y);
+            this.ctx.fillText(label, scaleTotalWidth - tickLength - 2, y);
+        }
+
+        // Draw sub ticks (no labels) - lighter slate for subtler ticks
+        this.ctx.strokeStyle = '#e2e8f0';
+        for (const value of subTickValues) {
+            const y = ((1 - value) / 2) * (canvasHeight - verticalPadding * 2) + verticalPadding;
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaleTotalWidth - subTickLength, y);
+            this.ctx.lineTo(scaleTotalWidth, y);
+            this.ctx.stroke();
         }
 
         // Draw min/max bars (data is interleaved: [min, max, min, max, ...])
-        this.ctx.strokeStyle = '#00ff88';
-        this.ctx.lineWidth = 1;
+        // Using modern slate-blue color that matches the track design
+        this.ctx.strokeStyle = '#475569';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.lineCap = 'round';
 
         const numBars = this.floatView.length / 2;
-        const waveformWidth = canvasWidth - scaleWidth;
+        const waveformWidth = canvasWidth - scaleTotalWidth;
         const barWidth = waveformWidth / numBars;
 
         let minPoint = Number.POSITIVE_INFINITY;
@@ -144,7 +177,7 @@ export class WaveformVisualisation extends Visualisation {
             const yMin = ((1 - minVal) / 2) * canvasHeight;
             const yMax = ((1 - maxVal) / 2) * canvasHeight;
 
-            const x = scaleWidth + i * barWidth + barWidth / 2;
+            const x = scaleTotalWidth + i * barWidth + barWidth / 2;
 
             this.ctx.beginPath();
             this.ctx.moveTo(x, yMin);
