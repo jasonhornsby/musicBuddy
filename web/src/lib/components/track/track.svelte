@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EllipsisVertical } from "lucide-svelte";
+	import { EllipsisVertical, Workflow, Trash2 } from "lucide-svelte";
 	import VisualisationCanvas from "../analyser/panels/visualisation.svelte";
 	import PipelineGraph from "./pipeline-graph.svelte";
 	import Button from "../ui/button/button.svelte";
@@ -70,9 +70,11 @@
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuItem onclick={() => (showRenderGraph = !showRenderGraph)}>
+						<Workflow class="w-4 h-4" />
 						{showRenderGraph ? 'Hide render graph' : 'Show render graph'}
 					</DropdownMenuItem>
 					<DropdownMenuItem onclick={() => console.log('Remove track clicked')}>
+						<Trash2 class="w-4 h-4" />
 						Remove track
 					</DropdownMenuItem>
 				</DropdownMenuContent>

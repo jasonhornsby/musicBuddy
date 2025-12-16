@@ -245,7 +245,7 @@ export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
             ...config
         };
         super(
-            `spectrum`,
+            `spectral_flux`,
             'spectral_flux',
             requestedDatapoints,
             defaultConfig

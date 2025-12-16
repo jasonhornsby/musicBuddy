@@ -145,19 +145,6 @@ func (pm *PipelineManager) UpdateViz(id string) {
 	} else {
 		println("[Go] Visualizer not found: ", id)
 	}
-	pm.PrintPipeline()
-}
-
-func (pm *PipelineManager) PrintPipeline() {
-	println("[Go] Pipeline:")
-	println("[Go] - ", len(pm.vizNodes), " viz nodes")
-	for id, node := range pm.vizNodes {
-		println("[Go] - ", id, node.GetId())
-	}
-	println("[Go] Shared nodes:")
-	for id, node := range pm.sharedNodes {
-		println("[Go] - ", id, node.GetId())
-	}
 }
 
 func (pm *PipelineManager) GetRenderTree() core.RenderTree {
