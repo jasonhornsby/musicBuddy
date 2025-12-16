@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getAudioContext } from "$lib/context/audio.svelte";
-	import { Visualisation, WaveformVisualisation } from "$lib/utils/visualiser";
+	import { Visualisation, WaveformVisualisation } from "$lib/utils/visualiser.svelte";
 	import type { ChannelMode } from "$lib/types/nodeConfig";
 
 	const {visualisation}: {visualisation: Visualisation } = $props()

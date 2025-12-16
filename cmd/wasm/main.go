@@ -86,6 +86,9 @@ func handleCreateViz(data js.Value) {
 	postMessage("viz_updated", map[string]interface{}{
 		"id": id,
 	})
+	postMessage("viz_ready", map[string]interface{}{
+		"id": id,
+	})
 }
 
 func handleConfigureViz(data js.Value) {

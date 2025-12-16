@@ -1,8 +1,11 @@
 import type { BaseVizConfig, SpectrumConfig } from '$lib/types/nodeConfig';
 
+import type { WaveformConfig } from '$lib/types/nodeConfig';
+
 export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfig> {
     id: string;
     type: string;
+    ready: boolean = $state(false);
     // Width of the output buffer not the visualisation itself
     // TODO: Evaluate if this is the best way to do this
     // We don't want to resise the buffer each time we resize the screen but for big screen width we 
@@ -65,6 +68,11 @@ export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfi
         this.ctx = ctx;
     }
 
+    public setReady(ready: boolean) {
+        console.log('Setting ready to', ready);
+        this.ready = ready;
+    }
+
     public updateConfig(newConfig: Partial<TConfig>) {
         this._config = { ...this._config, ...newConfig };
         this.onConfigChange?.(this._config);
@@ -76,7 +84,6 @@ export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfi
 }
 
 
-import type { WaveformConfig } from '$lib/types/nodeConfig';
 
 export class WaveformVisualisation extends Visualisation<WaveformConfig> {
     constructor(requestedDatapoints: number, config?: Partial<WaveformConfig>) {

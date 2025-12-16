@@ -1,5 +1,5 @@
 import type { AudioBufferSetup } from "$lib/utils/audioBufferManager";
-import type { Visualisation } from "../visualiser";
+import type { Visualisation } from "../visualiser.svelte";
 import type { BaseVizConfig } from "$lib/types/nodeConfig";
 import AudioWorker from './audio.worker.ts?worker';
 
@@ -28,7 +28,13 @@ export class AudioWorkerManager {
                     this.isAudioLoaded = true;
                     console.log('[TS] Audio loaded:', data);
                     break;
+                case 'viz_ready':
+                    this.visualisations[data.id].setReady(true);
+                    break;
                 case 'viz_updated':
+                    if (!this.visualisations[data.id].ready) {
+                        break;
+                    }
                     this.visualisations[data.id].draw();
                     break;
                 case 'viz_configured':

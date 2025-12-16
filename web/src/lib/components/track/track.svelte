@@ -11,7 +11,7 @@
 	} from "../ui/dropdown-menu";
 	import type { ChannelMode } from "$lib/types/nodeConfig";
 	import { getAudioContext } from "$lib/context/audio.svelte";
-	import { SpectrumVisualisation, WaveformVisualisation } from "$lib/utils/visualiser";
+	import { SpectrumVisualisation, WaveformVisualisation } from "$lib/utils/visualiser.svelte";
 
 
 	const audioContext = getAudioContext();
@@ -99,6 +99,10 @@
 		</div>
 	</aside>
 	<div class="flex-[300px] h-[300px] md:h-auto md:flex-1">
-		<Visualisation visualisation={visualisation2} />
+		{#if visualisation2.ready}
+			<Visualisation visualisation={visualisation2} />
+		{:else}
+			<span>Loading...</span>
+		{/if}
 	</div>
 </div>
