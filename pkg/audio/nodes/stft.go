@@ -8,7 +8,7 @@ import (
 
 type STFTNode struct {
 	core.BaseNode
-	input core.Node
+	Input core.Node
 	cache [][]complex128
 }
 
@@ -18,7 +18,7 @@ func NewSTFTNode(id string, input core.Node) *STFTNode {
 			ID:      id,
 			IsDirty: true,
 		},
-		input: input,
+		Input: input,
 	}
 	input.AddDownstream(n)
 	return n
@@ -29,7 +29,7 @@ func (n *STFTNode) GetData() (interface{}, error) {
 		return n.cache, nil
 	}
 
-	dataIface, err := n.input.GetData()
+	dataIface, err := n.Input.GetData()
 	if err != nil {
 		return nil, err
 	}

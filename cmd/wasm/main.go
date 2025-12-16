@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"syscall/js"
 
 	"parse_audio/pkg/audio"
@@ -90,6 +91,17 @@ func handleCreateViz(data js.Value) {
 	})
 	postMessage("viz_ready", map[string]interface{}{
 		"id": id,
+	})
+	tree := pipelineManager.GetRenderTree()
+	jsonData, err := json.Marshal(tree)
+	if err != nil {
+		postMessage("error", map[string]interface{}{
+			"message": err.Error(),
+		})
+		return
+	}
+	postMessage("render_tree_updated", map[string]interface{}{
+		"tree": string(jsonData),
 	})
 }
 

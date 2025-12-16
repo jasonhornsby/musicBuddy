@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { EllipsisVertical } from "lucide-svelte";
 	import VisualisationCanvas from "../analyser/panels/visualisation.svelte";
+	import PipelineGraph from "./pipeline-graph.svelte";
 	import Button from "../ui/button/button.svelte";
 	import ButtonGroup from "../ui/button-group/button-group.svelte";
 	import {
@@ -35,6 +36,7 @@
 
 	let channel = $state<ChannelMode>('mix');
 	let selectedVizId = $state<string>(waveformViz.id);
+	let showRenderGraph = $state(false);
 
 	const selectedVisualisation = $derived(
 		visualisations.find((v) => v.id === selectedVizId) ?? spectrumViz
@@ -67,6 +69,9 @@
 					{/snippet}
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					<DropdownMenuItem onclick={() => (showRenderGraph = !showRenderGraph)}>
+						{showRenderGraph ? 'Hide render graph' : 'Show render graph'}
+					</DropdownMenuItem>
 					<DropdownMenuItem onclick={() => console.log('Remove track clicked')}>
 						Remove track
 					</DropdownMenuItem>
@@ -131,7 +136,9 @@
 		</div>
 	</aside>
 	<div class="flex-[300px] h-[300px] md:h-auto md:flex-1">
-		{#if selectedVisualisation.ready}
+		{#if showRenderGraph}
+			<PipelineGraph data={workerManager.renderTree} />
+		{:else if selectedVisualisation.ready}
 			<VisualisationCanvas visualisation={selectedVisualisation} />
 		{:else}
 			<span>Loading...</span>

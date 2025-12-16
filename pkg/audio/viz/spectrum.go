@@ -8,7 +8,7 @@ import (
 
 type SpectalFluxVizNode struct {
 	core.BaseNode
-	input      core.Node
+	Input      core.Node
 	outputView js.Value
 
 	renderBuf    []float32
@@ -21,7 +21,7 @@ func NewSpectalFluxVizNode(id string, input core.Node) *SpectalFluxVizNode {
 			ID:      id,
 			IsDirty: true,
 		},
-		input: input,
+		Input: input,
 	}
 	input.AddDownstream(n)
 	return n
@@ -37,11 +37,11 @@ func (n *SpectalFluxVizNode) BindOutput(bufferJs js.Value) {
 }
 
 func (n *SpectalFluxVizNode) GetInput() core.Node {
-	return n.input
+	return n.Input
 }
 
 func (n *SpectalFluxVizNode) Update() {
-	val, _ := n.input.GetData()
+	val, _ := n.Input.GetData()
 
 	data := val.([]float64)
 

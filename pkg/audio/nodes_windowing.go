@@ -1,22 +1,20 @@
-package nodes
+package audio
 
 import (
 	"fmt"
 	"math"
-
-	"parse_audio/pkg/audio/core"
 )
 
 type WindowingNode struct {
-	core.BaseNode
-	Input core.Node
-	cfg   core.WindowingConfig
+	BaseNode
+	Input Node
+	cfg   WindowingConfig
 	cache [][]float64
 }
 
-func NewWindowingNode(id string, input core.Node, cfg core.WindowingConfig) *WindowingNode {
+func NewWindowingNode(id string, input Node, cfg WindowingConfig) *WindowingNode {
 	n := &WindowingNode{
-		BaseNode: core.BaseNode{
+		BaseNode: BaseNode{
 			ID:      id,
 			IsDirty: true,
 		},
@@ -50,7 +48,7 @@ func (n *WindowingNode) GetData() (interface{}, error) {
 	var windowWeights []float64
 
 	switch n.cfg.Method {
-	case core.WindowingMethodHann:
+	case WindowingMethodHann:
 		windowWeights = hannWindow(n.cfg.WindowSize)
 	default:
 		return nil, fmt.Errorf("invalid windowing method: %s", n.cfg.Method)

@@ -10,7 +10,7 @@ import (
 
 type WaveVizNode struct {
 	core.BaseNode
-	input      core.Node
+	Input      core.Node
 	outputView js.Value
 
 	renderBuf    []float32
@@ -23,7 +23,7 @@ func NewWaveVizNode(id string, input core.Node) *WaveVizNode {
 			ID:      id,
 			IsDirty: true,
 		},
-		input: input,
+		Input: input,
 	}
 	input.AddDownstream(n)
 	return n
@@ -39,18 +39,18 @@ func (n *WaveVizNode) BindOutput(bufferJs js.Value) {
 }
 
 func (n *WaveVizNode) GetInput() core.Node {
-	return n.input
+	return n.Input
 }
 
 func (n *WaveVizNode) SetInput(input core.Node) {
-	n.input = input
+	n.Input = input
 	n.IsDirty = true
 }
 
 func (n *WaveVizNode) Update() {
 	startTime := time.Now()
 
-	val, _ := n.input.GetData()
+	val, _ := n.Input.GetData()
 	samples := val.([]float32)
 	totalSamples := len(samples)
 

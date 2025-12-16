@@ -3,6 +3,19 @@ import type { Visualisation } from "../visualiser.svelte";
 import type { BaseVizConfig } from "$lib/types/nodeConfig";
 import AudioWorker from './audio.worker.ts?worker';
 
+type RenderTree = {
+    nodes: {
+        id: string;
+        type: string;
+        category: string;
+        label: string;
+    }[];
+    edges: {
+        from: string;
+        to: string;
+    }[];
+}
+
 export class AudioWorkerManager {
     public isReady = $state(false);
     public isAudioLoaded = $state(false);
@@ -10,6 +23,10 @@ export class AudioWorkerManager {
     private worker: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private visualisations: Record<string, Visualisation<any>> = {};
+    public renderTree: RenderTree = $state({
+        nodes: [],
+        edges: []
+    });
 
     constructor() {
         this.worker = new AudioWorker();
@@ -42,6 +59,9 @@ export class AudioWorkerManager {
                     // Config applied, now trigger an update to refresh the viz
                     this.updateVisualizer(data.id);
                     break;
+                case 'render_tree_updated':
+                    console.log('[TS] Render tree updated:', JSON.parse(data.tree));
+                    this.renderTree = JSON.parse(data.tree) as RenderTree;
                 default:
                     console.warn(`Unknown message type: ${type}`);
             }
