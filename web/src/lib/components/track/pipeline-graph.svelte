@@ -72,8 +72,6 @@
 		return { nodes: layoutedNodes, edges: rawEdges };
 	};
 
-	// --- REACTIVITY ---
-
 	// Watch for changes in the input data and recalculate layout
 	$effect(() => {
 		if (!data) return;
@@ -81,7 +79,10 @@
 		const initialNodes: Node[] = data.nodes.map((n) => ({
 			id: n.id,
 			// We can pass data to be rendered in the node
-			data: { label: n.label, type: n.type },
+			data: {
+				label: n.category === 'visualizer' ? `Visualizer: ${n.label}` : n.label,
+				type: n.type
+			},
 			position: { x: 0, y: 0 }, // Placeholder, Dagre will fix this
 			// Add a class based on category for styling
 			class: n.category === 'visualizer' ? 'node-viz' : 'node-compute'
@@ -133,7 +134,8 @@
 		text-align: center;
 		color: #fff;
 		border: 1px solid #555;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+		box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+		white-space: pre-line; /* Support multi-line labels */
 	}
 
 	/* Compute Nodes (Backend processing) */
