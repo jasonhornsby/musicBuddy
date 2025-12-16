@@ -6,7 +6,7 @@ import (
 	"parse_audio/pkg/audio/core"
 )
 
-type SpectrumVizNode struct {
+type SpectalFluxVizNode struct {
 	core.BaseNode
 	input      core.Node
 	outputView js.Value
@@ -15,8 +15,8 @@ type SpectrumVizNode struct {
 	cachedBufLen int
 }
 
-func NewSpectrumVizNode(id string, input core.Node) *SpectrumVizNode {
-	n := &SpectrumVizNode{
+func NewSpectalFluxVizNode(id string, input core.Node) *SpectalFluxVizNode {
+	n := &SpectalFluxVizNode{
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
@@ -27,20 +27,20 @@ func NewSpectrumVizNode(id string, input core.Node) *SpectrumVizNode {
 	return n
 }
 
-func (n *SpectrumVizNode) GetData() (interface{}, error) {
+func (n *SpectalFluxVizNode) GetData() (interface{}, error) {
 	return nil, nil
 }
 
-func (n *SpectrumVizNode) BindOutput(bufferJs js.Value) {
+func (n *SpectalFluxVizNode) BindOutput(bufferJs js.Value) {
 	n.outputView = bufferJs
 	n.cachedBufLen = bufferJs.Get("length").Int()
 }
 
-func (n *SpectrumVizNode) GetInput() core.Node {
+func (n *SpectalFluxVizNode) GetInput() core.Node {
 	return n.input
 }
 
-func (n *SpectrumVizNode) Update() {
+func (n *SpectalFluxVizNode) Update() {
 	val, _ := n.input.GetData()
 
 	data := val.([]float64)

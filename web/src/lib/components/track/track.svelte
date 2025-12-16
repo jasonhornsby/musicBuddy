@@ -34,7 +34,7 @@
 	const trackName = $state("Track 1");
 
 	let channel = $state<ChannelMode>('mix');
-	let selectedVizId = $state<string>(spectrumViz.id);
+	let selectedVizId = $state<string>(waveformViz.id);
 
 	const selectedVisualisation = $derived(
 		visualisations.find((v) => v.id === selectedVizId) ?? spectrumViz

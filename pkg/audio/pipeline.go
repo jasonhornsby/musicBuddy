@@ -94,9 +94,9 @@ func (pm *PipelineManager) CreateVisualizer(id string, vizType string, cfg VizCf
 	case "waveform":
 		audioSrc := pm.GetChannelNode(cfg.Channel)
 		vizNode = viz.NewWaveVizNode(id, audioSrc)
-	case "spectrum":
+	case "spectral_flux":
 		input := pm.GetFluxNode(cfg.Channel, cfg.WindowSize)
-		vizNode = viz.NewSpectrumVizNode(id, input)
+		vizNode = viz.NewSpectalFluxVizNode(id, input)
 	default:
 		panic("invalid visualizer type: " + vizType)
 	}

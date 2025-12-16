@@ -235,8 +235,8 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
 }
 
 export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
-    readonly name = "Spectrum";
-    readonly description = "Shows frequency distribution using FFT analysis";
+    readonly name = "Spectral Flux";
+    readonly description = "Shows the flux of spectral energy over time";
 
     constructor(requestedDatapoints: number, config?: Partial<SpectrumConfig>) {
         const defaultConfig: SpectrumConfig = {
@@ -246,7 +246,7 @@ export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
         };
         super(
             `spectrum`,
-            'spectrum',
+            'spectral_flux',
             requestedDatapoints,
             defaultConfig
         );
