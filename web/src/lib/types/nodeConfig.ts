@@ -5,3 +5,7 @@ export interface BaseVizConfig {
 }
 
 export interface WaveformConfig extends BaseVizConfig { }
+
+export interface SpectrumConfig extends BaseVizConfig {
+    windowSize: number;
+}

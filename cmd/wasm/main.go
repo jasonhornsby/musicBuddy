@@ -73,7 +73,7 @@ func handleCreateViz(data js.Value) {
 	buffer := data.Get("buffer")
 	configJS := data.Get("config")
 
-	cfg := audio.WaveformConfig{
+	cfg := audio.VizCfg{
 		Channel: parseChannelMode(configJS.Get("channel").String()),
 	}
 

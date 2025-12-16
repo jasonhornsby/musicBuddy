@@ -11,20 +11,24 @@
 	} from "../ui/dropdown-menu";
 	import type { ChannelMode } from "$lib/types/nodeConfig";
 	import { getAudioContext } from "$lib/context/audio.svelte";
-	import { WaveformVisualisation } from "$lib/utils/visualiser";
+	import { SpectrumVisualisation, WaveformVisualisation } from "$lib/utils/visualiser";
 
 
 	const audioContext = getAudioContext();
 	const workerManager = audioContext.getAudioWorkerManager();
 	const visualisation = new WaveformVisualisation(300);
+	const visualisation2 = new SpectrumVisualisation(300);
+
 	workerManager.createVisualizer(visualisation);
+	workerManager.createVisualizer(visualisation2);
 
 	const trackName = $state("Track 1");
 
 	let channel = $state<ChannelMode>('mix');
 
 	$effect(() => {
-		visualisation.updateConfig({ channel})
+		// visualisation.updateConfig({ channel});
+		visualisation2.updateConfig({ channel, windowSize: 1024 });
 	});
 </script>
 
@@ -95,6 +99,6 @@
 		</div>
 	</aside>
 	<div class="flex-[300px] h-[300px] md:h-auto md:flex-1">
-		<Visualisation {visualisation} />
+		<Visualisation visualisation={visualisation2} />
 	</div>
 </div>

@@ -1,4 +1,4 @@
-import type { BaseVizConfig } from '$lib/types/nodeConfig';
+import type { BaseVizConfig, SpectrumConfig } from '$lib/types/nodeConfig';
 
 export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfig> {
     id: string;
@@ -85,7 +85,7 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
             ...config
         };
         super(
-            `waveform-${Math.random().toString(36).substring(2, 15)}`,
+            `waveform`,
             'waveform',
             requestedDatapoints,
             defaultConfig
@@ -219,5 +219,139 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
         }
 
         console.log('Waveform smallest value:', minPoint, 'largest value:', maxPoint);
+    }
+}
+
+export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
+    constructor(requestedDatapoints: number, config?: Partial<SpectrumConfig>) {
+        const defaultConfig: SpectrumConfig = {
+            channel: 'mix',
+            windowSize: 1024,
+            ...config
+        };
+        super(
+            `spectrum`,
+            'spectrum',
+            requestedDatapoints,
+            defaultConfig
+        );
+    }
+
+    public getBufferSize(): number {
+        return this.requestedDatapoints * 4;
+    }
+
+    public draw(): void {
+        if (!this.ctx) {
+            throw new Error('Context not registered');
+        }
+
+        // Clear the entire canvas before redrawing
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+        const dpr = window.devicePixelRatio;
+        const canvasHeight = this.ctx.canvas.height / dpr;
+        const canvasWidth = this.ctx.canvas.width / dpr;
+
+        // Scale configuration (matching WaveformVisualisation)
+        const scaleWidth = 20;
+        const scalePadding = 4;
+        const scaleTotalWidth = scaleWidth + scalePadding;
+        const tickLength = 6;
+        const subTickLength = 3;
+        const verticalPadding = 6;
+
+        // Draw scale background (matching track.svelte slate-50/80 background)
+        this.ctx.fillStyle = '#f8fafc';
+        this.ctx.fillRect(0, 0, scaleTotalWidth, canvasHeight);
+
+        // Draw scale line (matching track.svelte slate-200 border)
+        this.ctx.strokeStyle = '#e2e8f0';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.moveTo(scaleTotalWidth, 0);
+        this.ctx.lineTo(scaleTotalWidth, canvasHeight);
+        this.ctx.stroke();
+
+        // Find min/max values for normalization
+        let minVal = Number.POSITIVE_INFINITY;
+        let maxVal = Number.NEGATIVE_INFINITY;
+        for (let i = 0; i < this.floatView.length; i++) {
+            const val = this.floatView[i];
+            if (val < minVal) minVal = val;
+            if (val > maxVal) maxVal = val;
+        }
+
+        // Handle edge case where all values are the same
+        const range = maxVal - minVal || 1;
+
+        // Draw faint horizontal gridlines
+        this.ctx.strokeStyle = '#f1f5f9';
+        this.ctx.lineWidth = 0.5;
+        const gridSteps = 4;
+        for (let i = 0; i <= gridSteps; i++) {
+            const y = verticalPadding + (i / gridSteps) * (canvasHeight - verticalPadding * 2);
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaleTotalWidth, y);
+            this.ctx.lineTo(canvasWidth, y);
+            this.ctx.stroke();
+        }
+
+        // Draw tick marks and labels (matching track.svelte slate-800 text)
+        this.ctx.fillStyle = '#1e293b';
+        this.ctx.font = '6px system-ui, -apple-system, sans-serif';
+        this.ctx.textAlign = 'right';
+        this.ctx.textBaseline = 'middle';
+
+        for (let i = 0; i <= gridSteps; i++) {
+            const y = verticalPadding + (i / gridSteps) * (canvasHeight - verticalPadding * 2);
+            const value = maxVal - (i / gridSteps) * range;
+
+            // Draw tick mark (matching track.svelte slate-200 border)
+            this.ctx.strokeStyle = '#cbd5e1';
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaleTotalWidth - tickLength, y);
+            this.ctx.lineTo(scaleTotalWidth, y);
+            this.ctx.stroke();
+
+            // Draw label
+            const label = value.toFixed(2);
+            this.ctx.fillText(label, scaleTotalWidth - tickLength - 2, y);
+        }
+
+        // Draw sub ticks (no labels) - lighter slate for subtler ticks
+        this.ctx.strokeStyle = '#e2e8f0';
+        for (let i = 0; i < gridSteps; i++) {
+            const y = verticalPadding + ((i + 0.5) / gridSteps) * (canvasHeight - verticalPadding * 2);
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaleTotalWidth - subTickLength, y);
+            this.ctx.lineTo(scaleTotalWidth, y);
+            this.ctx.stroke();
+        }
+
+        // Draw the spectrum line plot (using modern slate-blue color)
+        this.ctx.strokeStyle = '#475569';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        const numPoints = this.floatView.length;
+        const plotWidth = canvasWidth - scaleTotalWidth;
+        const pointSpacing = plotWidth / (numPoints - 1 || 1);
+
+        this.ctx.beginPath();
+        for (let i = 0; i < numPoints; i++) {
+            const val = this.floatView[i];
+            const normalizedVal = (val - minVal) / range;
+            const x = scaleTotalWidth + i * pointSpacing;
+            const y = verticalPadding + (1 - normalizedVal) * (canvasHeight - verticalPadding * 2);
+
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+        this.ctx.stroke();
     }
 }

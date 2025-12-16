@@ -19,27 +19,84 @@ func NewPipelineManager(source *Manager) *PipelineManager {
 	}
 }
 
+func (pm *PipelineManager) getOrBuildNode(key string, builder func() Node) Node {
+	if node, ok := pm.sharedNodes[key]; ok {
+		return node
+	}
+
+	node := builder()
+	pm.sharedNodes[key] = node
+	return node
+}
+
+type VizCfg struct {
+	Channel    ChannelMode
+	WindowSize int
+}
+
+// Dependency builders
+
 func (pm *PipelineManager) GetChannelNode(mode ChannelMode) Node {
 	key := fmt.Sprintf("channel_%d", mode)
 	if node, ok := pm.sharedNodes[key]; ok {
 		return node
 	}
 
-	node := NewChannelNode(key, pm.source, mode)
-	pm.sharedNodes[key] = node
-	return node
+	return pm.getOrBuildNode(key, func() Node {
+		return NewChannelNode(key, pm.source, mode)
+	})
 }
 
-func (pm *PipelineManager) CreateVisualizer(id string, vizType string, cfg NodeConfig) {
-	if vizType == "waveform" {
-		waveCfg, ok := cfg.(WaveformConfig)
-		if !ok {
-			panic("invalid waveform configuration")
-		}
-		audioSrc := pm.GetChannelNode(waveCfg.Channel)
-		node := NewWaveVizNode(id, audioSrc)
-		pm.nodes[id] = node
+func (pm *PipelineManager) GetWindowingNode(mode ChannelMode, size int) Node {
+	key := fmt.Sprintf("windowing_%d_%d", mode, size)
+
+	return pm.getOrBuildNode(key, func() Node {
+		input := pm.GetChannelNode(mode)
+		return NewWindowingNode(key, input, *NewWindowingConfig())
+	})
+}
+
+func (pm *PipelineManager) GetSTFTNode(mode ChannelMode, size int) Node {
+	key := fmt.Sprintf("stft_%d_%d", mode, size)
+
+	return pm.getOrBuildNode(key, func() Node {
+		input := pm.GetWindowingNode(mode, size)
+		return NewSTFTNode(key, input)
+	})
+}
+
+func (pm *PipelineManager) GetMagnitudeNode(mode ChannelMode, size int) Node {
+	key := fmt.Sprintf("magnitude_%d_%d", mode, size)
+
+	return pm.getOrBuildNode(key, func() Node {
+		input := pm.GetSTFTNode(mode, size)
+		return NewMagnitudeNode(key, input)
+	})
+}
+
+func (pm *PipelineManager) GetFluxNode(mode ChannelMode, size int) Node {
+	key := fmt.Sprintf("flux_%d_%d", mode, size)
+
+	return pm.getOrBuildNode(key, func() Node {
+		input := pm.GetMagnitudeNode(mode, size)
+		return NewFluxNode(key, input)
+	})
+}
+
+func (pm *PipelineManager) CreateVisualizer(id string, vizType string, cfg VizCfg) {
+	var vizNode VizNode
+
+	switch vizType {
+	case "waveform":
+		audioSrc := pm.GetChannelNode(cfg.Channel)
+		vizNode = NewWaveVizNode(id, audioSrc)
+	case "spectrum":
+		input := pm.GetFluxNode(cfg.Channel, cfg.WindowSize)
+		vizNode = NewSpectrumVizNode(id, input)
+	default:
+		panic("invalid visualizer type: " + vizType)
 	}
+	pm.nodes[id] = vizNode
 }
 
 // TODO: The cfg should not be a WaveformConfig, but a NodeConfig
