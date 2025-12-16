@@ -17,6 +17,7 @@
 			type: string; // e.g. "STFTNode"
 			category: string; // "compute" | "visualizer"
 			label: string;
+			duration: number;
 		}[];
 		edges: {
 			from: string;
@@ -73,20 +74,31 @@
 	};
 
 	// Watch for changes in the input data and recalculate layout
+	const formatDuration = (ms: number): string => {
+		if (ms < 1) return '<1ms';
+		return `${ms}ms`;
+	};
+
 	$effect(() => {
 		if (!data) return;
 
-		const initialNodes: Node[] = data.nodes.map((n) => ({
-			id: n.id,
-			// We can pass data to be rendered in the node
-			data: {
-				label: n.category === 'visualizer' ? `Visualizer: ${n.label}` : n.label,
-				type: n.type
-			},
-			position: { x: 0, y: 0 }, // Placeholder, Dagre will fix this
-			// Add a class based on category for styling
-			class: n.category === 'visualizer' ? 'node-viz' : 'node-compute'
-		}));
+		const initialNodes: Node[] = data.nodes.map((n) => {
+			const baseLabel = n.category === 'visualizer' ? `Visualizer: ${n.label}` : n.label;
+			const durationLabel = n.duration > 0 ? `\n${formatDuration(n.duration)}` : '';
+			
+			return {
+				id: n.id,
+				// We can pass data to be rendered in the node
+				data: {
+					label: baseLabel + durationLabel,
+					type: n.type,
+					duration: n.duration
+				},
+				position: { x: 0, y: 0 }, // Placeholder, Dagre will fix this
+				// Add a class based on category for styling
+				class: n.category === 'visualizer' ? 'node-viz' : 'node-compute'
+			};
+		});
 
 		const initialEdges: Edge[] = data.edges.map((e) => ({
 			id: `${e.from}-${e.to}`,

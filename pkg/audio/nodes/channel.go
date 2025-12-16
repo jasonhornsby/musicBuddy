@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"fmt"
+	"time"
 
 	"parse_audio/pkg/audio/core"
 )
@@ -34,12 +35,13 @@ func (n *ChannelNode) GetData() (interface{}, error) {
 		return n.cache, nil
 	}
 
-	data, err := n.Input.GetData()
+	dataIface, err := n.Input.GetData()
+	startTime := time.Now()
 	if err != nil {
 		return nil, err
 	}
 
-	decoded := data.(*core.DecodedAudioData)
+	decoded := dataIface.(*core.DecodedAudioData)
 
 	if n.mode == core.ChannelMix {
 		left := decoded.GetChannel(0)
@@ -61,6 +63,7 @@ func (n *ChannelNode) GetData() (interface{}, error) {
 	}
 
 	n.IsDirty = false
-
+	dur := time.Since(startTime)
+	n.SetComputeDurationMs(int(dur.Milliseconds()))
 	return n.cache, nil
 }

@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"math/cmplx"
+	"time"
 
 	"parse_audio/pkg/audio/core"
 )
@@ -32,6 +33,7 @@ func (n *MagnitudeNode) GetData() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	startTime := time.Now()
 	data := dataIface.([][]complex128)
 
 	output := make([][]float64, len(data))
@@ -47,6 +49,9 @@ func (n *MagnitudeNode) GetData() (interface{}, error) {
 
 	n.cache = output
 	n.IsDirty = false
+
+	dur := time.Since(startTime)
+	n.SetComputeDurationMs(int(dur.Milliseconds()))
 
 	return output, nil
 }

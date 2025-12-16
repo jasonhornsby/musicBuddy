@@ -2,6 +2,7 @@ package viz
 
 import (
 	"syscall/js"
+	"time"
 
 	"parse_audio/pkg/audio/core"
 )
@@ -36,6 +37,7 @@ func (n *SpectalFluxVizNode) BindOutput(bufferJs js.Value) {
 }
 
 func (n *SpectalFluxVizNode) Update() {
+	startTime := time.Now()
 	val, _ := n.Input.GetData()
 
 	data := val.([]float64)
@@ -51,6 +53,8 @@ func (n *SpectalFluxVizNode) Update() {
 	js.CopyBytesToJS(n.outputView, core.Float32ToBytes(n.renderBuf))
 
 	n.IsDirty = false
+	dur := time.Since(startTime)
+	n.SetComputeDurationMs(int(dur.Milliseconds()))
 
 	println("SpectrumVizNode: We have ", len(data), " data points")
 }

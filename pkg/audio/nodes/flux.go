@@ -1,6 +1,9 @@
 package nodes
 
-import "parse_audio/pkg/audio/core"
+import (
+	"parse_audio/pkg/audio/core"
+	"time"
+)
 
 type FluxNode struct {
 	core.BaseNode
@@ -28,6 +31,7 @@ func (n *FluxNode) GetData() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	startTime := time.Now()
 	// Input is [Frames][Magnitudes]float64
 	magnitudeFrames := dataIface.([][]float64)
 	numFrames := len(magnitudeFrames)
@@ -52,6 +56,9 @@ func (n *FluxNode) GetData() (interface{}, error) {
 
 	n.cache = flux
 	n.IsDirty = false
+
+	dur := time.Since(startTime)
+	n.SetComputeDurationMs(int(dur.Milliseconds()))
 
 	return flux, nil
 }

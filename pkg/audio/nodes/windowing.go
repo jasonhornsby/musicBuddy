@@ -3,6 +3,7 @@ package nodes
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"parse_audio/pkg/audio/core"
 )
@@ -36,6 +37,7 @@ func hannWindow(size int) []float64 {
 }
 
 func (n *WindowingNode) GetData() (interface{}, error) {
+
 	if !n.IsDirty {
 		return n.cache, nil
 	}
@@ -45,6 +47,7 @@ func (n *WindowingNode) GetData() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	startTime := time.Now()
 
 	var windowWeights []float64
 
@@ -68,6 +71,9 @@ func (n *WindowingNode) GetData() (interface{}, error) {
 
 	n.cache = frames
 	n.IsDirty = false
+
+	dur := time.Since(startTime)
+	n.SetComputeDurationMs(int(dur.Milliseconds()))
 
 	return frames, nil
 }

@@ -159,6 +159,7 @@ func (pm *PipelineManager) GetRenderTree() core.RenderTree {
 			Type:     nodeType,
 			Category: category,
 			Label:    n.GetId(),
+			Duration: n.GetComputeDurationMs(),
 		})
 	}
 

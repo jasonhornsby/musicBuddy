@@ -27,6 +27,7 @@ type Node interface {
 	RemoveDownstream(n Node)
 	GetData() (interface{}, error)
 	GetInput() Node
+	GetComputeDurationMs() int
 }
 
 type VizNode interface {
@@ -40,6 +41,8 @@ type BaseNode struct {
 	IsDirty    bool
 	Downstream []Node
 	Input      Node
+
+	computeDurationMs int
 }
 
 func (n *BaseNode) GetId() string {
@@ -48,6 +51,10 @@ func (n *BaseNode) GetId() string {
 
 func (n *BaseNode) GetInput() Node {
 	return n.Input
+}
+
+func (n *BaseNode) SetComputeDurationMs(durationMs int) {
+	n.computeDurationMs = durationMs
 }
 
 func (n *BaseNode) Invalidate() {
@@ -71,6 +78,10 @@ func (bn *BaseNode) RemoveDownstream(n Node) {
 			return
 		}
 	}
+}
+
+func (bn *BaseNode) GetComputeDurationMs() int {
+	return bn.computeDurationMs
 }
 
 // ChannelMode represents how audio channels should be processed

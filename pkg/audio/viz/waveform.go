@@ -1,7 +1,6 @@
 package viz
 
 import (
-	"fmt"
 	"syscall/js"
 	"time"
 
@@ -131,7 +130,5 @@ func (n *WaveVizNode) Update() {
 
 	// Performance logging
 	dur := time.Since(startTime)
-	actualScanned := outputCount * (step / stride)
-	println("[GO] Waveform Update took:", dur.Milliseconds(), "ms. Samples scanned:", actualScanned)
-	fmt.Printf("[GO] Output buffer range - smallest: %f, largest: %f\n", globalMin, globalMax)
+	n.SetComputeDurationMs(int(dur.Milliseconds()))
 }

@@ -4,6 +4,7 @@ type GraphNode struct {
 	ID       string `json:"id"`
 	Type     string `json:"type"`
 	Category string `json:"category"`
+	Duration int    `json:"duration"`
 	IsDirty  bool   `json:"is_dirty"`
 	Label    string `json:"label"`
 }

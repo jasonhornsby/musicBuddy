@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"parse_audio/pkg/audio/core"
+	"time"
 
 	"github.com/mjibson/go-dsp/fft"
 )
@@ -24,11 +25,14 @@ func NewSTFTNode(id string, input core.Node) *STFTNode {
 }
 
 func (n *STFTNode) GetData() (interface{}, error) {
+
 	if !n.IsDirty {
 		return n.cache, nil
 	}
 
 	dataIface, err := n.Input.GetData()
+	startTime := time.Now()
+
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +45,8 @@ func (n *STFTNode) GetData() (interface{}, error) {
 
 	n.cache = frames
 	n.IsDirty = false
+	dur := time.Since(startTime)
+	n.SetComputeDurationMs(int(dur.Milliseconds()))
 
 	return frames, nil
 }
