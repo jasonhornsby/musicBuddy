@@ -8,7 +8,6 @@ import (
 
 type ChannelNode struct {
 	core.BaseNode
-	input core.Node
 	mode  core.ChannelMode
 	cache []float32
 }
@@ -18,9 +17,9 @@ func NewChannelNode(id string, input core.Node, mode core.ChannelMode) *ChannelN
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
+			Input:   input,
 		},
-		input: input,
-		mode:  mode,
+		mode: mode,
 	}
 	input.AddDownstream(n)
 	return n
@@ -35,7 +34,7 @@ func (n *ChannelNode) GetData() (interface{}, error) {
 		return n.cache, nil
 	}
 
-	data, err := n.input.GetData()
+	data, err := n.Input.GetData()
 	if err != nil {
 		return nil, err
 	}

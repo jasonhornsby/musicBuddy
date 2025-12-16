@@ -10,7 +10,6 @@ import (
 
 type WaveVizNode struct {
 	core.BaseNode
-	Input      core.Node
 	outputView js.Value
 
 	renderBuf    []float32
@@ -22,8 +21,8 @@ func NewWaveVizNode(id string, input core.Node) *WaveVizNode {
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
+			Input:   input,
 		},
-		Input: input,
 	}
 	input.AddDownstream(n)
 	return n

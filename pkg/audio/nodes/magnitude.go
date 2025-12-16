@@ -8,7 +8,6 @@ import (
 
 type MagnitudeNode struct {
 	core.BaseNode
-	Input core.Node
 	cache [][]float64
 }
 
@@ -17,8 +16,8 @@ func NewMagnitudeNode(id string, input core.Node) *MagnitudeNode {
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
+			Input:   input,
 		},
-		Input: input,
 	}
 	input.AddDownstream(n)
 	return n

@@ -26,6 +26,7 @@ type Node interface {
 	AddDownstream(n Node)
 	RemoveDownstream(n Node)
 	GetData() (interface{}, error)
+	GetInput() Node
 }
 
 type VizNode interface {
@@ -38,10 +39,15 @@ type BaseNode struct {
 	ID         string
 	IsDirty    bool
 	Downstream []Node
+	Input      Node
 }
 
 func (n *BaseNode) GetId() string {
 	return n.ID
+}
+
+func (n *BaseNode) GetInput() Node {
+	return n.Input
 }
 
 func (n *BaseNode) Invalidate() {

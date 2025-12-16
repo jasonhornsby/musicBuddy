@@ -9,7 +9,6 @@ import (
 
 type WindowingNode struct {
 	core.BaseNode
-	Input core.Node
 	cfg   core.WindowingConfig
 	cache [][]float64
 }
@@ -19,9 +18,9 @@ func NewWindowingNode(id string, input core.Node, cfg core.WindowingConfig) *Win
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
+			Input:   input,
 		},
-		Input: input,
-		cfg:   cfg,
+		cfg: cfg,
 	}
 	input.AddDownstream(n)
 	return n

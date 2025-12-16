@@ -4,7 +4,6 @@ import "parse_audio/pkg/audio/core"
 
 type FluxNode struct {
 	core.BaseNode
-	Input core.Node
 	cache []float64
 }
 
@@ -13,8 +12,8 @@ func NewFluxNode(id string, input core.Node) *FluxNode {
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
+			Input:   input,
 		},
-		Input: input,
 	}
 	input.AddDownstream(n)
 	return n

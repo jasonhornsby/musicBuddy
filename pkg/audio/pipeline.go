@@ -163,26 +163,7 @@ func (pm *PipelineManager) GetRenderTree() core.RenderTree {
 	}
 
 	resolveInput := func(n Node) {
-		var input Node
-
-		switch n.(type) {
-		case *nodes.WindowingNode:
-			input = n.(*nodes.WindowingNode).Input
-		case *nodes.STFTNode:
-			input = n.(*nodes.STFTNode).Input
-		case *nodes.MagnitudeNode:
-			input = n.(*nodes.MagnitudeNode).Input
-		case *nodes.FluxNode:
-			input = n.(*nodes.FluxNode).Input
-		case *nodes.ChannelNode:
-			return
-		case *viz.WaveVizNode:
-			input = n.(*viz.WaveVizNode).Input
-		case *viz.SpectalFluxVizNode:
-			input = n.(*viz.SpectalFluxVizNode).Input
-		default:
-			panic("unknown node type: " + fmt.Sprintf("%T", n))
-		}
+		input := n.GetInput()
 
 		if input != nil {
 			outputEdges = append(outputEdges, core.GraphEdge{
