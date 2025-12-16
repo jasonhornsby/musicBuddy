@@ -1,21 +1,25 @@
-package audio
+package viz
 
-import "syscall/js"
+import (
+	"syscall/js"
+
+	"parse_audio/pkg/audio/core"
+)
 
 type SpectrumVizNode struct {
-	BaseNode
-	input      Node
+	core.BaseNode
+	input      core.Node
 	outputView js.Value
 
 	renderBuf    []float32
 	cachedBufLen int
 }
 
-func NewSpectrumVizNode(id string, input Node) *SpectrumVizNode {
+func NewSpectrumVizNode(id string, input core.Node) *SpectrumVizNode {
 	n := &SpectrumVizNode{
-		BaseNode: BaseNode{
-			id:      id,
-			isDirty: true,
+		BaseNode: core.BaseNode{
+			ID:      id,
+			IsDirty: true,
 		},
 		input: input,
 	}
@@ -32,7 +36,7 @@ func (n *SpectrumVizNode) BindOutput(bufferJs js.Value) {
 	n.cachedBufLen = bufferJs.Get("length").Int()
 }
 
-func (n *SpectrumVizNode) GetInput() Node {
+func (n *SpectrumVizNode) GetInput() core.Node {
 	return n.input
 }
 
@@ -49,9 +53,9 @@ func (n *SpectrumVizNode) Update() {
 		n.renderBuf[i] = float32(data[i])
 	}
 
-	js.CopyBytesToJS(n.outputView, Float32ToBytes(n.renderBuf))
+	js.CopyBytesToJS(n.outputView, core.Float32ToBytes(n.renderBuf))
 
-	n.isDirty = false
+	n.IsDirty = false
 
 	println("SpectrumVizNode: We have ", len(data), " data points")
 }

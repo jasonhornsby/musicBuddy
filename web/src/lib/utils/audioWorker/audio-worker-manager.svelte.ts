@@ -8,7 +8,8 @@ export class AudioWorkerManager {
     public isAudioLoaded = $state(false);
 
     private worker: Worker;
-    private visualisations: Record<string, Visualisation> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private visualisations: Record<string, Visualisation<any>> = {};
 
     constructor() {
         this.worker = new AudioWorker();
@@ -74,7 +75,8 @@ export class AudioWorkerManager {
         this.worker.terminate();
     }
 
-    public createVisualizer(visualisation: Visualisation) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public createVisualizer(visualisation: Visualisation<any>) {
         this.worker.postMessage({
             type: 'create_viz',
             id: visualisation.id,

@@ -3,7 +3,8 @@
 	import { Visualisation, WaveformVisualisation } from "$lib/utils/visualiser.svelte";
 	import type { ChannelMode } from "$lib/types/nodeConfig";
 
-	const {visualisation}: {visualisation: Visualisation } = $props()
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const {visualisation}: {visualisation: Visualisation<any> } = $props()
 
 	const audioContext = getAudioContext();
 	const workerManager = audioContext.getAudioWorkerManager();

@@ -1,8 +1,10 @@
 package main
 
 import (
-	"parse_audio/pkg/audio"
 	"syscall/js"
+
+	"parse_audio/pkg/audio"
+	"parse_audio/pkg/audio/core"
 )
 
 var (
@@ -112,14 +114,14 @@ func handleConfigureViz(data js.Value) {
 	})
 }
 
-func parseChannelMode(s string) audio.ChannelMode {
+func parseChannelMode(s string) core.ChannelMode {
 	switch s {
 	case "left":
-		return audio.ChannelLeft
+		return core.ChannelLeft
 	case "right":
-		return audio.ChannelRight
+		return core.ChannelRight
 	default:
-		return audio.ChannelMix
+		return core.ChannelMix
 	}
 }
 

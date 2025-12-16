@@ -1,16 +1,18 @@
-package audio
+package nodes
+
+import "parse_audio/pkg/audio/core"
 
 type FluxNode struct {
-	BaseNode
-	input Node
+	core.BaseNode
+	input core.Node
 	cache []float64
 }
 
-func NewFluxNode(id string, input Node) *FluxNode {
+func NewFluxNode(id string, input core.Node) *FluxNode {
 	n := &FluxNode{
-		BaseNode: BaseNode{
-			id:      id,
-			isDirty: true,
+		BaseNode: core.BaseNode{
+			ID:      id,
+			IsDirty: true,
 		},
 		input: input,
 	}
@@ -19,7 +21,7 @@ func NewFluxNode(id string, input Node) *FluxNode {
 }
 
 func (n *FluxNode) GetData() (interface{}, error) {
-	if !n.isDirty {
+	if !n.IsDirty {
 		return n.cache, nil
 	}
 
@@ -50,7 +52,7 @@ func (n *FluxNode) GetData() (interface{}, error) {
 	}
 
 	n.cache = flux
-	n.isDirty = false
+	n.IsDirty = false
 
 	return flux, nil
 }

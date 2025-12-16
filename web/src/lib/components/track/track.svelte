@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { EllipsisVertical } from "lucide-svelte";
-	import Visualisation from "../analyser/panels/visualisation.svelte";
+	import VisualisationCanvas from "../analyser/panels/visualisation.svelte";
 	import Button from "../ui/button/button.svelte";
 	import ButtonGroup from "../ui/button-group/button-group.svelte";
 	import {
@@ -9,26 +9,40 @@
 		DropdownMenuContent,
 		DropdownMenuItem,
 	} from "../ui/dropdown-menu";
+	import {
+		Select,
+		SelectTrigger,
+		SelectContent,
+		SelectItem,
+	} from "../ui/select";
 	import type { ChannelMode } from "$lib/types/nodeConfig";
 	import { getAudioContext } from "$lib/context/audio.svelte";
-	import { SpectrumVisualisation, WaveformVisualisation } from "$lib/utils/visualiser.svelte";
+	import { SpectrumVisualisation, WaveformVisualisation, Visualisation } from "$lib/utils/visualiser.svelte";
 
 
 	const audioContext = getAudioContext();
 	const workerManager = audioContext.getAudioWorkerManager();
-	const visualisation = new WaveformVisualisation(300);
-	const visualisation2 = new SpectrumVisualisation(300);
+	const waveformViz = new WaveformVisualisation(300);
+	const spectrumViz = new SpectrumVisualisation(1000);
 
-	workerManager.createVisualizer(visualisation);
-	workerManager.createVisualizer(visualisation2);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const visualisations: Visualisation<any>[] = [waveformViz, spectrumViz];
+
+	workerManager.createVisualizer(waveformViz);
+	workerManager.createVisualizer(spectrumViz);
 
 	const trackName = $state("Track 1");
 
 	let channel = $state<ChannelMode>('mix');
+	let selectedVizId = $state<string>(spectrumViz.id);
+
+	const selectedVisualisation = $derived(
+		visualisations.find((v) => v.id === selectedVizId) ?? spectrumViz
+	);
 
 	$effect(() => {
-		// visualisation.updateConfig({ channel});
-		visualisation2.updateConfig({ channel, windowSize: 1024 });
+		// waveformViz.updateConfig({ channel});
+		spectrumViz.updateConfig({ channel, windowSize: 1024 });
 	});
 </script>
 
@@ -91,16 +105,34 @@
 						Mix
 					</Button>
 				</ButtonGroup>
+			</div>
+			<div class="flex flex-col gap-1">
 				<span class="text-[10px] font-medium text-slate-500 uppercase tracking-[0.14em]">
-					Waveform
+					Visualisation
 				</span>
-				<span>Target points</span>
+				<Select type="single" bind:value={selectedVizId}>
+					<SelectTrigger class="w-full text-[11px] h-8">
+						{selectedVisualisation.name}
+					</SelectTrigger>
+					<SelectContent align="start">
+						{#each visualisations as viz}
+							<SelectItem value={viz.id}>
+								{#snippet children({ selected })}
+									<div class="flex flex-col gap-0.5">
+										<span class="font-medium">{viz.name}</span>
+										<span class="text-[10px] text-muted-foreground">{viz.description}</span>
+									</div>
+								{/snippet}
+							</SelectItem>
+						{/each}
+					</SelectContent>
+				</Select>
 			</div>
 		</div>
 	</aside>
 	<div class="flex-[300px] h-[300px] md:h-auto md:flex-1">
-		{#if visualisation2.ready}
-			<Visualisation visualisation={visualisation2} />
+		{#if selectedVisualisation.ready}
+			<VisualisationCanvas visualisation={selectedVisualisation} />
 		{:else}
 			<span>Loading...</span>
 		{/if}

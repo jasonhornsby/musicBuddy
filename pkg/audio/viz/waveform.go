@@ -1,25 +1,27 @@
-package audio
+package viz
 
 import (
 	"fmt"
 	"syscall/js"
 	"time"
+
+	"parse_audio/pkg/audio/core"
 )
 
 type WaveVizNode struct {
-	BaseNode
-	input      Node
+	core.BaseNode
+	input      core.Node
 	outputView js.Value
 
 	renderBuf    []float32
 	cachedBufLen int
 }
 
-func NewWaveVizNode(id string, input Node) *WaveVizNode {
+func NewWaveVizNode(id string, input core.Node) *WaveVizNode {
 	n := &WaveVizNode{
-		BaseNode: BaseNode{
-			id:      id,
-			isDirty: true,
+		BaseNode: core.BaseNode{
+			ID:      id,
+			IsDirty: true,
 		},
 		input: input,
 	}
@@ -36,13 +38,13 @@ func (n *WaveVizNode) BindOutput(bufferJs js.Value) {
 	n.cachedBufLen = bufferJs.Get("length").Int()
 }
 
-func (n *WaveVizNode) GetInput() Node {
+func (n *WaveVizNode) GetInput() core.Node {
 	return n.input
 }
 
-func (n *WaveVizNode) SetInput(input Node) {
+func (n *WaveVizNode) SetInput(input core.Node) {
 	n.input = input
-	n.isDirty = true
+	n.IsDirty = true
 }
 
 func (n *WaveVizNode) Update() {
@@ -123,10 +125,10 @@ func (n *WaveVizNode) Update() {
 		readIdx = end
 	}
 
-	n.isDirty = false
+	n.IsDirty = false
 
 	// Fast cast to bytes
-	js.CopyBytesToJS(n.outputView, Float32ToBytes(n.renderBuf))
+	js.CopyBytesToJS(n.outputView, core.Float32ToBytes(n.renderBuf))
 
 	// Performance logging
 	dur := time.Since(startTime)

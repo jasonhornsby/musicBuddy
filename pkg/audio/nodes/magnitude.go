@@ -1,18 +1,22 @@
-package audio
+package nodes
 
-import "math/cmplx"
+import (
+	"math/cmplx"
+
+	"parse_audio/pkg/audio/core"
+)
 
 type MagnitudeNode struct {
-	BaseNode
-	input Node
+	core.BaseNode
+	input core.Node
 	cache [][]float64
 }
 
-func NewMagnitudeNode(id string, input Node) *MagnitudeNode {
+func NewMagnitudeNode(id string, input core.Node) *MagnitudeNode {
 	n := &MagnitudeNode{
-		BaseNode: BaseNode{
-			id:      id,
-			isDirty: true,
+		BaseNode: core.BaseNode{
+			ID:      id,
+			IsDirty: true,
 		},
 		input: input,
 	}
@@ -21,7 +25,7 @@ func NewMagnitudeNode(id string, input Node) *MagnitudeNode {
 }
 
 func (n *MagnitudeNode) GetData() (interface{}, error) {
-	if !n.isDirty {
+	if !n.IsDirty {
 		return n.cache, nil
 	}
 
@@ -43,7 +47,7 @@ func (n *MagnitudeNode) GetData() (interface{}, error) {
 	}
 
 	n.cache = output
-	n.isDirty = false
+	n.IsDirty = false
 
 	return output, nil
 }

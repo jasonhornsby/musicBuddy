@@ -1,28 +1,23 @@
-package audio
+package nodes
 
-import "fmt"
+import (
+	"fmt"
 
-type ChannelMode int
-
-const (
-	ChannelLeft  ChannelMode = 0
-	ChannelRight ChannelMode = 1
-	// Mix is an average of all channels
-	ChannelMix ChannelMode = 99
+	"parse_audio/pkg/audio/core"
 )
 
 type ChannelNode struct {
-	BaseNode
-	input Node
-	mode  ChannelMode
+	core.BaseNode
+	input core.Node
+	mode  core.ChannelMode
 	cache []float32
 }
 
-func NewChannelNode(id string, input Node, mode ChannelMode) *ChannelNode {
+func NewChannelNode(id string, input core.Node, mode core.ChannelMode) *ChannelNode {
 	n := &ChannelNode{
-		BaseNode: BaseNode{
-			id:      id,
-			isDirty: true,
+		BaseNode: core.BaseNode{
+			ID:      id,
+			IsDirty: true,
 		},
 		input: input,
 		mode:  mode,
@@ -32,11 +27,11 @@ func NewChannelNode(id string, input Node, mode ChannelMode) *ChannelNode {
 }
 
 func (n *ChannelNode) GetId() string {
-	return n.id
+	return n.ID
 }
 
 func (n *ChannelNode) GetData() (interface{}, error) {
-	if !n.isDirty {
+	if !n.IsDirty {
 		return n.cache, nil
 	}
 
@@ -45,9 +40,9 @@ func (n *ChannelNode) GetData() (interface{}, error) {
 		return nil, err
 	}
 
-	decoded := data.(*DecodedAudioData)
+	decoded := data.(*core.DecodedAudioData)
 
-	if n.mode == ChannelMix {
+	if n.mode == core.ChannelMix {
 		left := decoded.GetChannel(0)
 		right := decoded.GetChannel(1)
 
@@ -66,7 +61,7 @@ func (n *ChannelNode) GetData() (interface{}, error) {
 		n.cache = decoded.GetChannel(int(n.mode))
 	}
 
-	n.isDirty = false
+	n.IsDirty = false
 
 	return n.cache, nil
 }

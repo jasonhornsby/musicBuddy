@@ -5,6 +5,8 @@ import type { WaveformConfig } from '$lib/types/nodeConfig';
 export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfig> {
     id: string;
     type: string;
+    abstract readonly name: string;
+    abstract readonly description: string;
     ready: boolean = $state(false);
     // Width of the output buffer not the visualisation itself
     // TODO: Evaluate if this is the best way to do this
@@ -86,6 +88,9 @@ export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfi
 
 
 export class WaveformVisualisation extends Visualisation<WaveformConfig> {
+    readonly name = "Waveform";
+    readonly description = "Displays audio amplitude over time as min/max bars";
+
     constructor(requestedDatapoints: number, config?: Partial<WaveformConfig>) {
         const defaultConfig: WaveformConfig = {
             channel: 'mix',
@@ -230,6 +235,9 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
 }
 
 export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
+    readonly name = "Spectrum";
+    readonly description = "Shows frequency distribution using FFT analysis";
+
     constructor(requestedDatapoints: number, config?: Partial<SpectrumConfig>) {
         const defaultConfig: SpectrumConfig = {
             channel: 'mix',

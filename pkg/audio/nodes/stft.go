@@ -1,18 +1,22 @@
-package audio
+package nodes
 
-import "github.com/mjibson/go-dsp/fft"
+import (
+	"parse_audio/pkg/audio/core"
+
+	"github.com/mjibson/go-dsp/fft"
+)
 
 type STFTNode struct {
-	BaseNode
-	input Node
+	core.BaseNode
+	input core.Node
 	cache [][]complex128
 }
 
-func NewSTFTNode(id string, input Node) *STFTNode {
+func NewSTFTNode(id string, input core.Node) *STFTNode {
 	n := &STFTNode{
-		BaseNode: BaseNode{
-			id:      id,
-			isDirty: true,
+		BaseNode: core.BaseNode{
+			ID:      id,
+			IsDirty: true,
 		},
 		input: input,
 	}
@@ -21,7 +25,7 @@ func NewSTFTNode(id string, input Node) *STFTNode {
 }
 
 func (n *STFTNode) GetData() (interface{}, error) {
-	if !n.isDirty {
+	if !n.IsDirty {
 		return n.cache, nil
 	}
 
@@ -37,7 +41,7 @@ func (n *STFTNode) GetData() (interface{}, error) {
 	}
 
 	n.cache = frames
-	n.isDirty = false
+	n.IsDirty = false
 
 	return frames, nil
 }

@@ -3,20 +3,22 @@ package audio
 import (
 	"fmt"
 	"syscall/js"
+
+	"parse_audio/pkg/audio/core"
 )
 
 type Manager struct {
-	BaseNode
+	core.BaseNode
 
 	rawMp3  *RawMp3Data
-	decoded *DecodedAudioData
+	decoded *core.DecodedAudioData
 	loaded  bool
 }
 
 func NewManager() *Manager {
 	return &Manager{
-		BaseNode: BaseNode{
-			id: "source",
+		BaseNode: core.BaseNode{
+			ID: "source",
 		},
 		loaded: false,
 	}
@@ -49,7 +51,7 @@ func (m *Manager) Load(msg js.Value) error {
 		channelSabs[i] = decodedJsBuffers.Index(i)
 	}
 
-	m.decoded = NewDecodedAudioData(channelSabs, numSamples, sampleRate)
+	m.decoded = core.NewDecodedAudioData(channelSabs, numSamples, sampleRate)
 	m.loaded = true
 
 	m.Invalidate()
@@ -65,18 +67,18 @@ func (m *Manager) GetRawMp3() *RawMp3Data {
 	return m.rawMp3
 }
 
-func (m *Manager) GetDecoded() *DecodedAudioData {
+func (m *Manager) GetDecoded() *core.DecodedAudioData {
 	return m.decoded
 }
 
 func (m *Manager) GetNumChannels() int {
-	return len(m.decoded.channels)
+	return len(m.decoded.Channels)
 }
 
 func (m *Manager) GetNumSamples() int {
-	return m.decoded.numSamples
+	return m.decoded.NumSamples
 }
 
 func (m *Manager) GetSampleRate() int {
-	return m.decoded.sampleRate
+	return m.decoded.SampleRate
 }
