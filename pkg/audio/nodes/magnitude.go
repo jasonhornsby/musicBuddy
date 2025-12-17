@@ -41,7 +41,7 @@ func (n *MagnitudeNode) GetData() (interface{}, error) {
 		halfSize := (len(cFrame) / 2) + 1
 		mags := make([]float64, halfSize)
 
-		for j := 0; j < halfSize; j++ {
+		for j := range halfSize {
 			mags[j] = cmplx.Abs(cFrame[j])
 		}
 		output[i] = mags

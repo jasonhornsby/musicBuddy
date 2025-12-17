@@ -4,12 +4,13 @@ import (
 	"parse_audio/pkg/audio/core"
 	"time"
 
-	"github.com/mjibson/go-dsp/fft"
+	"gonum.org/v1/gonum/dsp/fourier"
 )
 
 type STFTNode struct {
 	core.BaseNode
-	cache [][]complex128
+	cache   [][]complex128
+	fftPlan *fourier.FFT
 }
 
 func NewSTFTNode(id string, input core.Node) *STFTNode {
@@ -37,10 +38,19 @@ func (n *STFTNode) GetData() (interface{}, error) {
 		return nil, err
 	}
 	data := dataIface.([][]float64)
+	if len(data) == 0 {
+		return [][]complex128{}, nil
+	}
+
+	// Create or reuse FFT plan (reusing is faster)
+	frameSize := len(data[0])
+	if n.fftPlan == nil || n.fftPlan.Len() != frameSize {
+		n.fftPlan = fourier.NewFFT(frameSize)
+	}
+
 	frames := make([][]complex128, len(data))
 	for i, frame := range data {
-		fftComplex := fft.FFTReal(frame)
-		frames[i] = fftComplex
+		frames[i] = n.fftPlan.Coefficients(nil, frame)
 	}
 
 	n.cache = frames
