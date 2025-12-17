@@ -1,6 +1,5 @@
 import type { AudioBufferSetup } from "$lib/utils/audioBufferManager";
 import type { Visualisation } from "../visualiser.svelte";
-import type { BaseVizConfig } from "$lib/types/nodeConfig";
 import AudioWorker from './audio.worker.ts?worker';
 import type { RenderTree } from "$lib/components/track/pipeline-graph.svelte";
 import { SvelteMap } from "svelte/reactivity";
@@ -22,12 +21,13 @@ export class AudioWorkerManager {
 
     private worker: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private visualisations: Record<string, Visualisation<any>> = {};
+    private visualisations: Record<string, Visualisation> = {};
     public renderTree: RenderTree = $state({
         nodes: [],
         edges: []
     });
     public configSchemas: SvelteMap<string, ParamDef[]> = new SvelteMap();
+    private vizBuffers = new Map<string, Float32Array>();
 
     constructor() {
         this.worker = new AudioWorker();
@@ -61,13 +61,13 @@ export class AudioWorkerManager {
                     this.configSchemas.set(data.id, JSON.parse(data.schema) as ParamDef[]);
                     console.log('[TS] Viz created:', { renderTree: this.renderTree, configSchema: this.configSchemas.get(data.id) });
                     break;
-                case 'viz_configured':
-                    // Config applied, now trigger an update to refresh the viz
-                    this.updateVisualizer(data.id);
-                    break;
                 case 'render_tree_updated':
                     console.log('[TS] Render tree updated:', JSON.parse(data.tree));
                     this.renderTree = JSON.parse(data.tree) as RenderTree;
+                    break;
+                case 'buffer_allocated':
+                    console.log('[TS] Buffer allocated:', data.id, data.buffer.length);
+                    this.visualisations[data.id].buffer = Float32Array.from(data.buffer);
                     break;
                 default:
                     console.warn(`Unknown message type: ${type}`);
@@ -103,12 +103,11 @@ export class AudioWorkerManager {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public createVisualizer(visualisation: Visualisation<any>) {
+    public createVisualizer(visualisation: Visualisation) {
         this.worker.postMessage({
             type: 'create_viz',
             id: visualisation.id,
             vizType: visualisation.type,
-            buffer: visualisation.uInt8View,
             config: visualisation.config
         });
         this.visualisations[visualisation.id] = visualisation;
@@ -119,7 +118,8 @@ export class AudioWorkerManager {
         });
     }
 
-    public configureVisualizer(id: string, config: BaseVizConfig) {
+    public configureVisualizer(id: string, config: Map<string, any>) {
+        console.log('[TS] Configuring visualizer:', id, config);
         this.worker.postMessage({
             type: 'configure_viz',
             id: id,

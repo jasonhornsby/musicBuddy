@@ -37,7 +37,6 @@ type NodeProvider interface {
 
 type VizNode interface {
 	Node
-	BindOutput(bufferJs js.Value)
 	Update()
 	GetSchema() []ParamDef
 	Reconfigure(cfg ConfigMap, provider NodeProvider) error

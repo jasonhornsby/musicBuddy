@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"math"
+	"strconv"
 	"time"
 
 	"parse_audio/pkg/audio/core"
@@ -39,7 +40,12 @@ func GetWindowingSchema() []core.ParamDef {
 }
 
 func ParseWindowingConfig(cfg core.ConfigMap) int {
-	winSize := cfg.GetInt("win_size", 1024)
+	winSizeStr := cfg.GetString("win_size", "1024")
+	winSize, err := strconv.Atoi(winSizeStr)
+	if err != nil {
+		println("[Go] Error parsing window size: ", err)
+		return 1024
+	}
 	println("[Go] Windowing config: ", winSize)
 	return winSize
 }

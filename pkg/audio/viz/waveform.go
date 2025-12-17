@@ -45,6 +45,7 @@ func (n *WaveVizNode) SetInput(input core.Node) {
 }
 
 func (n *WaveVizNode) Update() {
+	println("[GO] Updating waveform visualisation")
 	startTime := time.Now()
 
 	val, _ := n.Input.GetData()
@@ -124,6 +125,9 @@ func (n *WaveVizNode) Update() {
 
 	n.IsDirty = false
 
+	println("[GO] Copying buffer to JS")
+	println("[GO] Buffer length: ", len(n.renderBuf))
+	println("[GO] Output view length: ", n.outputView.Get("length").Int())
 	// Fast cast to bytes
 	js.CopyBytesToJS(n.outputView, core.Float32ToBytes(n.renderBuf))
 
@@ -146,14 +150,36 @@ func (n *WaveVizNode) Reconfigure(cfg core.ConfigMap, provider core.NodeProvider
 	if n.Input == nil {
 		n.Input = channelNode
 		channelNode.AddDownstream(n)
-		return nil
-	}
-
-	if n.Input.GetId() != channelNode.GetId() {
+	} else if n.Input.GetId() != channelNode.GetId() {
 		n.Input.RemoveDownstream(n)
 		channelNode.AddDownstream(n)
 		n.Input = channelNode
 	}
 
+	numFloats := 3000 * 2 // Hardcoded points * 2 for min/max
+	sizeBytes := numFloats * 4
+
+	n.ensureBufferSize(sizeBytes)
+	n.renderBuf = make([]float32, numFloats)
+
 	return nil
+}
+
+func (n *WaveVizNode) ensureBufferSize(size int) {
+
+	println("[GO] Checking buffer size: ", size, n.ID)
+	if n.outputView.Truthy() && n.outputView.Get("length").Int() == size {
+		return
+	}
+
+	println("[GO] Requesting new buffer size: ", size, n.ID)
+
+	buffer := js.Global().Call("allocateVizBuffer", js.ValueOf(n.ID), js.ValueOf(size))
+
+	if !buffer.Truthy() {
+		panic("[GO] Failed to allocate buffer")
+	}
+
+	n.outputView = buffer
+	n.cachedBufLen = size
 }

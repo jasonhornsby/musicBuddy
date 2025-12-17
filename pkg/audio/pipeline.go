@@ -2,7 +2,6 @@ package audio
 
 import (
 	"fmt"
-	"syscall/js"
 
 	"parse_audio/pkg/audio/core"
 	"parse_audio/pkg/audio/nodes"
@@ -143,12 +142,6 @@ func (pm *PipelineManager) ConfigureVizNode(id string, cfgRaw map[string]any) er
 	println("[Go] Config: ", cfg.String())
 
 	return vizNode.Reconfigure(cfg, pm)
-}
-
-func (pm *PipelineManager) BindVizBuffer(id string, buffer js.Value) {
-	if node, ok := pm.vizNodes[id]; ok {
-		node.BindOutput(buffer)
-	}
 }
 
 func (pm *PipelineManager) UpdateViz(id string) {

@@ -1,8 +1,4 @@
-import type { BaseVizConfig, SpectrumConfig } from '$lib/types/nodeConfig';
-
-import type { WaveformConfig } from '$lib/types/nodeConfig';
-
-export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfig> {
+export abstract class Visualisation {
     id: string;
     type: string;
     abstract readonly name: string;
@@ -15,56 +11,33 @@ export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfi
     // The JS code takes this layout and draws the visualisation. The buffer does not contain the bitmap of the viz
     requestedDatapoints: number;
     ctx: CanvasRenderingContext2D | null = null;
+    private _buffer: Float32Array | null = null;
 
-    private buffer: SharedArrayBuffer | null = null;
-    private _floatView: Float32Array | null = null;
-    private _uInt8View: Uint8Array | null = null;
-    private _config: TConfig;
-    private onConfigChange?: (config: TConfig) => void;
-
-    get floatView(): Float32Array {
-        return this._floatView as Float32Array;
+    get buffer(): Float32Array {
+        return this._buffer as Float32Array;
     }
 
-    set floatView(value: Float32Array) {
-        this._floatView = value;
+    set buffer(value: Float32Array) {
+        console.log('[SOMETHING] Setting buffer for visualisation', this.id, value.length);
+        this._buffer = value;
+        this.draw();
     }
 
-    get uInt8View(): Uint8Array {
-        return this._uInt8View as Uint8Array;
-    }
+    private onConfigChange?: (config: Map<string, any>) => void;
+    private _config: Map<string, any> = new Map();
 
-    set uInt8View(value: Uint8Array) {
-        this._uInt8View = value;
-    }
-
-    get config(): TConfig {
+    get config(): Map<string, any> {
         return this._config;
     }
 
-    constructor(id: string, type: string, requestedDatapoints: number, defaultConfig: TConfig) {
+    constructor(id: string, type: string, requestedDatapoints: number) {
         this.id = id;
         this.type = type;
         this.requestedDatapoints = requestedDatapoints;
-        this._config = defaultConfig;
-        this.createBuffer();
     }
 
     public abstract getBufferSize(): number;
     public abstract draw(): void;
-
-    public getBuffer(): SharedArrayBuffer {
-        if (!this.buffer) {
-            this.createBuffer();
-        }
-        return this.buffer as SharedArrayBuffer;
-    }
-
-    public createBuffer() {
-        this.buffer = new SharedArrayBuffer(this.getBufferSize());
-        this.floatView = new Float32Array(this.buffer);
-        this.uInt8View = new Uint8Array(this.buffer);
-    }
 
     public registerContext(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
@@ -75,32 +48,27 @@ export abstract class Visualisation<TConfig extends BaseVizConfig = BaseVizConfi
         this.ready = ready;
     }
 
-    public updateConfig(newConfig: Partial<TConfig>) {
+    public updateConfig(newConfig: Partial<Map<string, any>>) {
         this._config = { ...this._config, ...newConfig };
         this.onConfigChange?.(this._config);
     }
 
-    public registerConfigChangeHandler(handler: (config: TConfig) => void) {
+    public registerConfigChangeHandler(handler: (config: Map<string, any>) => void) {
         this.onConfigChange = handler;
     }
 }
 
 
 
-export class WaveformVisualisation extends Visualisation<WaveformConfig> {
+export class WaveformVisualisation extends Visualisation {
     readonly name = "Waveform";
     readonly description = "Displays audio amplitude over time as min/max bars";
 
-    constructor(requestedDatapoints: number, config?: Partial<WaveformConfig>) {
-        const defaultConfig: WaveformConfig = {
-            channel: 'mix',
-            ...config
-        };
+    constructor(requestedDatapoints: number, config?: Partial<Map<string, any>>) {
         super(
             `waveform`,
             'waveform',
-            requestedDatapoints,
-            defaultConfig
+            requestedDatapoints
         );
     }
 
@@ -113,6 +81,11 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
         if (!this.ctx) {
             return;
         }
+        if (!this.buffer) {
+            console.log('No buffer available for waveform visualisation');
+            return;
+        }
+        console.log(this.buffer);
 
         // Clear the entire canvas before redrawing
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
@@ -203,7 +176,7 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = 'round';
 
-        const numBars = this.floatView.length / 2;
+        const numBars = this.buffer.length / 2;
         const waveformWidth = canvasWidth - scaleTotalWidth;
         const barWidth = waveformWidth / numBars;
 
@@ -211,8 +184,8 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
         let maxPoint = Number.NEGATIVE_INFINITY;
 
         for (let i = 0; i < numBars; i++) {
-            const minVal = this.floatView[i * 2];
-            const maxVal = this.floatView[i * 2 + 1];
+            const minVal = this.buffer[i * 2];
+            const maxVal = this.buffer[i * 2 + 1];
 
             // Track smallest and largest values
             if (minVal < minPoint) minPoint = minVal;
@@ -234,21 +207,15 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
     }
 }
 
-export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
+export class SpectrumVisualisation extends Visualisation {
     readonly name = "Spectral Flux";
     readonly description = "Shows the flux of spectral energy over time";
 
-    constructor(requestedDatapoints: number, config?: Partial<SpectrumConfig>) {
-        const defaultConfig: SpectrumConfig = {
-            channel: 'mix',
-            windowSize: 1024,
-            ...config
-        };
+    constructor(requestedDatapoints: number) {
         super(
             `spectral_flux`,
             'spectral_flux',
             requestedDatapoints,
-            defaultConfig
         );
     }
 
@@ -291,8 +258,8 @@ export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
         // Find min/max values for normalization
         let minVal = Number.POSITIVE_INFINITY;
         let maxVal = Number.NEGATIVE_INFINITY;
-        for (let i = 0; i < this.floatView.length; i++) {
-            const val = this.floatView[i];
+        for (let i = 0; i < this.buffer.length; i++) {
+            const val = this.buffer[i];
             if (val < minVal) minVal = val;
             if (val > maxVal) maxVal = val;
         }
@@ -350,13 +317,13 @@ export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
-        const numPoints = this.floatView.length;
+        const numPoints = this.buffer.length;
         const plotWidth = canvasWidth - scaleTotalWidth;
         const pointSpacing = plotWidth / (numPoints - 1 || 1);
 
         this.ctx.beginPath();
         for (let i = 0; i < numPoints; i++) {
-            const val = this.floatView[i];
+            const val = this.buffer[i];
             const normalizedVal = (val - minVal) / range;
             const x = scaleTotalWidth + i * pointSpacing;
             const y = verticalPadding + (1 - normalizedVal) * (canvasHeight - verticalPadding * 2);

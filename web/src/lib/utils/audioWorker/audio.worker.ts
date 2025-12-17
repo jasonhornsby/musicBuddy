@@ -6,6 +6,9 @@ declare global {
         run(instance: WebAssembly.Instance): Promise<void>;
         env: Record<string, string>;
     }
+    interface Window {
+        allocateVizBuffer: (id: string, size: number) => Uint8Array;
+    }
 }
 
 
@@ -27,6 +30,18 @@ WebAssembly.instantiateStreaming(fetch('/main.wasm'), go.importObject)
         console.error('[Worker] Error loading wasm:', error);
         postMessage({ type: 'worker_error', error: error.message, timeStamp: Date.now() });
     });
+
+self.allocateVizBuffer = (id: string, size: number) => {
+    console.log('[Worker] Allocating viz buffer for id: ', id, ' size: ', size);
+    const buffer = new SharedArrayBuffer(size);
+
+    self.postMessage({
+        type: 'buffer_allocated',
+        id,
+        buffer: Array.from(new Uint8Array(buffer))
+    });
+    return new Uint8Array(buffer)
+}
 
 self.onmessage = (event: MessageEvent) => {
     console.log('[Worker] Received message:', event.data);

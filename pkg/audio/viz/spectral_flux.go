@@ -30,11 +30,6 @@ func (n *SpectalFluxVizNode) GetData() (interface{}, error) {
 	return nil, nil
 }
 
-func (n *SpectalFluxVizNode) BindOutput(bufferJs js.Value) {
-	n.outputView = bufferJs
-	n.cachedBufLen = bufferJs.Get("length").Int()
-}
-
 func (n *SpectalFluxVizNode) Update() {
 	startTime := time.Now()
 	val, _ := n.Input.GetData()
@@ -76,14 +71,35 @@ func (n *SpectalFluxVizNode) Reconfigure(cfg core.ConfigMap, provider core.NodeP
 	if n.Input == nil {
 		n.Input = fluxNode
 		fluxNode.AddDownstream(n)
-		return nil
-	}
-
-	if n.Input.GetId() != fluxNode.GetId() {
+	} else if n.Input.GetId() != fluxNode.GetId() {
 		n.Input.RemoveDownstream(n)
 		fluxNode.AddDownstream(n)
 		n.Input = fluxNode
 	}
 
+	// Make sure the output buffer is the correct size
+	numFloats := winSize / 2
+	sizeBytes := numFloats * 4
+
+	n.ensureBufferSize(sizeBytes)
+
 	return nil
+}
+
+func (n *SpectalFluxVizNode) ensureBufferSize(size int) {
+	println("[GO] Checking buffer size: ", size, n.ID)
+	if n.outputView.Truthy() && n.outputView.Get("length").Int() == size {
+		return
+	}
+
+	println("[GO] Requesting new buffer size: ", size, n.ID)
+
+	buffer := js.Global().Call("allocateVizBuffer", js.ValueOf(n.ID), js.ValueOf(size))
+
+	if !buffer.Truthy() {
+		panic("[GO] Failed to allocate buffer")
+	}
+
+	n.outputView = buffer
+	n.cachedBufLen = size
 }

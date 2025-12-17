@@ -23,6 +23,7 @@ type ConfigMap map[string]interface{}
 
 func (c *ConfigMap) GetInt(key string, fallback int) int {
 	if val, ok := (*c)[key]; ok {
+		println("[Go] Getting int for key: ", key, " value: ", val)
 		switch val := val.(type) {
 		case float64:
 			return int(val)

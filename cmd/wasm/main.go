@@ -47,12 +47,12 @@ func handleLoadAudio(data js.Value) {
 	err := audioManager.Load(data)
 	if err != nil {
 		println("[Go] Error loading audio: ", err.Error())
-		postMessage("error", map[string]interface{}{
+		postMessage("error", map[string]any{
 			"message": err.Error(),
 		})
 		return
 	}
-	postMessage("audio_loaded", map[string]interface{}{
+	postMessage("audio_loaded", map[string]any{
 		"numChannels": audioManager.GetNumChannels(),
 		"numSamples":  audioManager.GetNumSamples(),
 		"sampleRate":  audioManager.GetSampleRate(),
@@ -63,7 +63,7 @@ func handleUpdateViz(data js.Value) {
 	println("[Go] Updating visualizer")
 	id := data.Get("id").String()
 	pipelineManager.UpdateViz(id)
-	postMessage("viz_updated", map[string]interface{}{
+	postMessage("viz_updated", map[string]any{
 		"id": id,
 	})
 }
@@ -73,7 +73,6 @@ func handleCreateViz(data js.Value) {
 
 	id := data.Get("id").String()
 	vizType := data.Get("vizType").String()
-	buffer := data.Get("buffer")
 
 	// We use default values for config until the config schema is shown to the user
 
@@ -84,10 +83,6 @@ func handleCreateViz(data js.Value) {
 		})
 		return
 	}
-
-	// Bind the visualizer buffer. This needs to be done after the visualizer is created and configured
-	// TODO: Make the Visualizer request a buffer of a specific size
-	pipelineManager.BindVizBuffer(id, buffer)
 
 	// Get the configuration schema for the visualizer
 	schema, err := pipelineManager.GetVizSchema(id)
