@@ -105,32 +105,15 @@ func (pm *PipelineManager) CreateVisualizer(id string, vizType string, cfg VizCf
 
 // TODO: The cfg should not be a WaveformConfig, but a NodeConfig
 // This way we can use the same function to configure any visualizer node
-func (pm *PipelineManager) ConfigureVizNode(id string, cfg WaveformConfig) error {
-	node, ok := pm.vizNodes[id]
+func (pm *PipelineManager) ConfigureVizNode(id string, cfgRaw map[string]interface{}) error {
+	vizNode, ok := pm.vizNodes[id]
 	if !ok {
 		return fmt.Errorf("visualizer not found: %s", id)
 	}
 
-	waveNode, ok := node.(*viz.WaveVizNode)
-	if !ok {
-		return fmt.Errorf("node is not a WaveVizNode: %s", id)
-	}
+	cfg := core.ConfigMap(cfgRaw)
 
-	// Get the new channel node
-	newInput := pm.GetChannelNode(cfg.Channel)
-	oldInput := waveNode.GetInput()
-
-	// Skip if same input
-	if oldInput.GetId() == newInput.GetId() {
-		return nil
-	}
-
-	// Rewire: disconnect from old, connect to new
-	oldInput.RemoveDownstream(waveNode)
-	newInput.AddDownstream(waveNode)
-	waveNode.SetInput(newInput)
-
-	return nil
+	return vizNode.Reconfigure(cfg, pm)
 }
 
 func (pm *PipelineManager) BindVizBuffer(id string, buffer js.Value) {

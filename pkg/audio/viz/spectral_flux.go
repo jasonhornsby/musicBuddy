@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"parse_audio/pkg/audio/core"
+	"parse_audio/pkg/audio/nodes"
 )
 
 type SpectalFluxVizNode struct {
@@ -57,4 +58,30 @@ func (n *SpectalFluxVizNode) Update() {
 	n.SetComputeDurationMs(int(dur.Milliseconds()))
 
 	println("SpectrumVizNode: We have ", len(data), " data points")
+}
+
+func (n *SpectalFluxVizNode) GetSchema() []core.ParamDef {
+	s := []core.ParamDef{}
+
+	s = append(s, nodes.GetChannelSchema()...)
+	s = append(s, nodes.GetWindowingSchema()...)
+
+	return s
+}
+
+func (n *SpectalFluxVizNode) Reconfigure(cfg core.ConfigMap, provider core.NodeProvider) error {
+	channelConfig := nodes.ParseChannelConfig(cfg)
+	winSize := nodes.ParseWindowingConfig(cfg)
+
+	fluxNode := provider.GetFluxNode(channelConfig, winSize)
+
+	if n.Input.GetId() != fluxNode.GetId() {
+		if n.Input != nil {
+			n.Input.RemoveDownstream(n)
+		}
+		fluxNode.AddDownstream(n)
+		n.Input = fluxNode
+	}
+
+	return nil
 }

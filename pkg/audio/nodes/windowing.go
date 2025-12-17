@@ -27,6 +27,23 @@ func NewWindowingNode(id string, input core.Node, cfg core.WindowingConfig) *Win
 	return n
 }
 
+func GetWindowingSchema() []core.ParamDef {
+	return []core.ParamDef{
+		{
+			Key:     "win_size",
+			Label:   "Window size",
+			Type:    core.ParamSelect,
+			Default: 1024,
+			Options: []string{"128", "256", "512", "1024", "2048", "4096"},
+		},
+	}
+}
+
+func ParseWindowingConfig(cfg core.ConfigMap) int {
+	winSize := cfg.GetInt("win_size", 1024)
+	return winSize
+}
+
 func hannWindow(size int) []float64 {
 	window := make([]float64, size)
 	for i := 0; i < size; i++ {

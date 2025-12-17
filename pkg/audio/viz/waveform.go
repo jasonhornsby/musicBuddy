@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"parse_audio/pkg/audio/core"
+	"parse_audio/pkg/audio/nodes"
 )
 
 type WaveVizNode struct {
@@ -131,4 +132,26 @@ func (n *WaveVizNode) Update() {
 	// Performance logging
 	dur := time.Since(startTime)
 	n.SetComputeDurationMs(int(dur.Milliseconds()))
+}
+
+func (n *WaveVizNode) GetSchema() []core.ParamDef {
+	s := []core.ParamDef{}
+	s = append(s, nodes.GetChannelSchema()...)
+	return s
+}
+
+func (n *WaveVizNode) Reconfigure(cfg core.ConfigMap, provider core.NodeProvider) error {
+	channelConfig := nodes.ParseChannelConfig(cfg)
+
+	channelNode := provider.GetChannelNode(channelConfig)
+
+	if n.Input.GetId() != channelNode.GetId() {
+		if n.Input != nil {
+			n.Input.RemoveDownstream(n)
+		}
+		channelNode.AddDownstream(n)
+		n.Input = channelNode
+	}
+
+	return nil
 }

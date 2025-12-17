@@ -30,10 +30,17 @@ type Node interface {
 	GetComputeDurationMs() int
 }
 
+type NodeProvider interface {
+	GetFluxNode(channel ChannelMode, size int) Node
+	GetChannelNode(channel ChannelMode) Node
+}
+
 type VizNode interface {
 	Node
 	BindOutput(bufferJs js.Value)
 	Update()
+	GetSchema() []ParamDef
+	Reconfigure(cfg ConfigMap, provider NodeProvider) error
 }
 
 type BaseNode struct {

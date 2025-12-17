@@ -108,13 +108,17 @@ func handleCreateViz(data js.Value) {
 func handleConfigureViz(data js.Value) {
 	println("[Go] Configuring visualizer")
 	id := data.Get("id").String()
-	configJS := data.Get("config")
+	configJS := data.Get("config").String()
 
-	cfg := audio.WaveformConfig{
-		Channel: parseChannelMode(configJS.Get("channel").String()),
+	cfg := map[string]interface{}{}
+	err := json.Unmarshal([]byte(configJS), &cfg)
+	if err != nil {
+		postMessage("error", map[string]interface{}{
+			"message": err.Error(),
+		})
+		return
 	}
-
-	err := pipelineManager.ConfigureVizNode(id, cfg)
+	err = pipelineManager.ConfigureVizNode(id, cfg)
 	if err != nil {
 		postMessage("error", map[string]interface{}{
 			"message": err.Error(),

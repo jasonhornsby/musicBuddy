@@ -67,3 +67,28 @@ func (n *ChannelNode) GetData() (interface{}, error) {
 	n.SetComputeDurationMs(int(dur.Milliseconds()))
 	return n.cache, nil
 }
+
+func GetChannelSchema() []core.ParamDef {
+	return []core.ParamDef{
+		{
+			Key:     "channel",
+			Label:   "Channel",
+			Type:    core.ParamSelect,
+			Default: core.ChannelMix,
+			Options: []string{"mix", "left", "right"},
+		},
+	}
+}
+
+func ParseChannelConfig(cfg core.ConfigMap) core.ChannelMode {
+	channel := cfg.GetString("channel", "mix")
+	switch channel {
+	case "mix":
+		return core.ChannelMix
+	case "left":
+		return core.ChannelLeft
+	case "right":
+		return core.ChannelRight
+	}
+	return core.ChannelMix
+}
