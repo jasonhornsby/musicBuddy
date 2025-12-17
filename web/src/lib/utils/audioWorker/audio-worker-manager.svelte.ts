@@ -68,6 +68,7 @@ export class AudioWorkerManager {
                 case 'render_tree_updated':
                     console.log('[TS] Render tree updated:', JSON.parse(data.tree));
                     this.renderTree = JSON.parse(data.tree) as RenderTree;
+                    break;
                 default:
                     console.warn(`Unknown message type: ${type}`);
             }

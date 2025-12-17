@@ -1,7 +1,6 @@
 package nodes
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -10,18 +9,18 @@ import (
 
 type WindowingNode struct {
 	core.BaseNode
-	cfg   core.WindowingConfig
-	cache [][]float64
+	winSize int
+	cache   [][]float64
 }
 
-func NewWindowingNode(id string, input core.Node, cfg core.WindowingConfig) *WindowingNode {
+func NewWindowingNode(id string, input core.Node, winSize int) *WindowingNode {
 	n := &WindowingNode{
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
 			Input:   input,
 		},
-		cfg: cfg,
+		winSize: winSize,
 	}
 	input.AddDownstream(n)
 	return n
@@ -41,6 +40,7 @@ func GetWindowingSchema() []core.ParamDef {
 
 func ParseWindowingConfig(cfg core.ConfigMap) int {
 	winSize := cfg.GetInt("win_size", 1024)
+	println("[Go] Windowing config: ", winSize)
 	return winSize
 }
 
@@ -68,19 +68,14 @@ func (n *WindowingNode) GetData() (interface{}, error) {
 
 	var windowWeights []float64
 
-	switch n.cfg.Method {
-	case core.WindowingMethodHann:
-		windowWeights = hannWindow(n.cfg.WindowSize)
-	default:
-		return nil, fmt.Errorf("invalid windowing method: %s", n.cfg.Method)
-	}
+	windowWeights = hannWindow(n.winSize)
 
 	var frames [][]float64
 
-	for i := 0; i < len(data)-n.cfg.WindowSize; i += n.cfg.HopSize {
-		rawFrame := data[i : i+n.cfg.WindowSize]
-		processedFrame := make([]float64, n.cfg.WindowSize)
-		for j := 0; j < n.cfg.WindowSize; j++ {
+	for i := 0; i < len(data)-n.winSize; i += n.winSize / 2 {
+		rawFrame := data[i : i+n.winSize]
+		processedFrame := make([]float64, n.winSize)
+		for j := 0; j < n.winSize; j++ {
 			processedFrame[j] = float64(rawFrame[j]) * windowWeights[j]
 		}
 		frames = append(frames, processedFrame)

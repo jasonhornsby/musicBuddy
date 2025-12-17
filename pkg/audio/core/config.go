@@ -1,5 +1,7 @@
 package core
 
+import "encoding/json"
+
 const (
 	ParamInt    = "int"
 	ParamFloat  = "float"
@@ -40,4 +42,9 @@ func (c *ConfigMap) GetString(key string, fallback string) string {
 		}
 	}
 	return fallback
+}
+
+func (c *ConfigMap) String() string {
+	jsonStr, _ := json.Marshal(*c)
+	return string(jsonStr)
 }

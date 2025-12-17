@@ -51,38 +51,38 @@ func (pm *PipelineManager) GetChannelNode(mode core.ChannelMode) core.Node {
 	})
 }
 
-func (pm *PipelineManager) GetWindowingNode(mode core.ChannelMode, size int) core.Node {
-	key := fmt.Sprintf("windowing_%d_%d", mode, size)
+func (pm *PipelineManager) GetWindowingNode(mode core.ChannelMode, winSize int) core.Node {
+	key := fmt.Sprintf("windowing_%d_%d", mode, winSize)
 
 	return pm.getOrBuildNode(key, func() core.Node {
 		input := pm.GetChannelNode(mode)
-		return nodes.NewWindowingNode(key, input, *core.NewWindowingConfig())
+		return nodes.NewWindowingNode(key, input, winSize)
 	})
 }
 
-func (pm *PipelineManager) GetSTFTNode(mode core.ChannelMode, size int) core.Node {
-	key := fmt.Sprintf("stft_%d_%d", mode, size)
+func (pm *PipelineManager) GetSTFTNode(mode core.ChannelMode, winSize int) core.Node {
+	key := fmt.Sprintf("stft_%d_%d", mode, winSize)
 
 	return pm.getOrBuildNode(key, func() core.Node {
-		input := pm.GetWindowingNode(mode, size)
+		input := pm.GetWindowingNode(mode, winSize)
 		return nodes.NewSTFTNode(key, input)
 	})
 }
 
-func (pm *PipelineManager) GetMagnitudeNode(mode core.ChannelMode, size int) core.Node {
-	key := fmt.Sprintf("magnitude_%d_%d", mode, size)
+func (pm *PipelineManager) GetMagnitudeNode(mode core.ChannelMode, winSize int) core.Node {
+	key := fmt.Sprintf("magnitude_%d_%d", mode, winSize)
 
 	return pm.getOrBuildNode(key, func() core.Node {
-		input := pm.GetSTFTNode(mode, size)
+		input := pm.GetSTFTNode(mode, winSize)
 		return nodes.NewMagnitudeNode(key, input)
 	})
 }
 
-func (pm *PipelineManager) GetFluxNode(mode core.ChannelMode, size int) core.Node {
-	key := fmt.Sprintf("flux_%d_%d", mode, size)
+func (pm *PipelineManager) GetFluxNode(mode core.ChannelMode, winSize int) core.Node {
+	key := fmt.Sprintf("flux_%d_%d", mode, winSize)
 
 	return pm.getOrBuildNode(key, func() core.Node {
-		input := pm.GetMagnitudeNode(mode, size)
+		input := pm.GetMagnitudeNode(mode, winSize)
 		return nodes.NewFluxNode(key, input)
 	})
 }
@@ -139,6 +139,8 @@ func (pm *PipelineManager) ConfigureVizNode(id string, cfgRaw map[string]any) er
 	}
 
 	cfg := core.ConfigMap(cfgRaw)
+
+	println("[Go] Config: ", cfg.String())
 
 	return vizNode.Reconfigure(cfg, pm)
 }
