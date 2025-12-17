@@ -71,37 +71,47 @@ func handleUpdateViz(data js.Value) {
 
 func handleCreateViz(data js.Value) {
 	println("[Go] Creating visualizer")
+
 	id := data.Get("id").String()
 	vizType := data.Get("vizType").String()
 	buffer := data.Get("buffer")
-	configJS := data.Get("config")
 
-	cfg := audio.VizCfg{
-		Channel: parseChannelMode(configJS.Get("channel").String()),
-	}
+	// We use default values for config until the config schema is shown to the user
 
-	pipelineManager.CreateVisualizer(id, vizType, cfg)
-	pipelineManager.BindVizBuffer(id, buffer)
-	postMessage("viz_created", map[string]interface{}{
-		"id": id,
-	})
-	pipelineManager.UpdateViz(id)
-	postMessage("viz_updated", map[string]interface{}{
-		"id": id,
-	})
-	postMessage("viz_ready", map[string]interface{}{
-		"id": id,
-	})
-	tree := pipelineManager.GetRenderTree()
-	jsonData, err := json.Marshal(tree)
+	err := pipelineManager.CreateVisualizer(id, vizType)
 	if err != nil {
-		postMessage("error", map[string]interface{}{
+		postMessage("error", map[string]any{
 			"message": err.Error(),
 		})
 		return
 	}
-	postMessage("render_tree_updated", map[string]interface{}{
-		"tree": string(jsonData),
+
+	// Bind the visualizer buffer. This needs to be done after the visualizer is created and configured
+	// TODO: Make the Visualizer request a buffer of a specific size
+	pipelineManager.BindVizBuffer(id, buffer)
+
+	// Get the configuration schema for the visualizer
+	schema, err := pipelineManager.GetVizSchema(id)
+	if err != nil {
+		postMessage("error", map[string]any{
+			"message": err.Error(),
+		})
+		return
+	}
+	schemaJSON, _ := json.Marshal(schema)
+	treeJSON, _ := json.Marshal(pipelineManager.GetRenderTree())
+	postMessage("viz_created", map[string]any{
+		"id":     id,
+		"schema": string(schemaJSON),
+		"tree":   string(treeJSON),
+	})
+
+	pipelineManager.UpdateViz(id)
+	postMessage("viz_updated", map[string]any{
+		"id": id,
+	})
+	postMessage("viz_ready", map[string]any{
+		"id": id,
 	})
 }
 

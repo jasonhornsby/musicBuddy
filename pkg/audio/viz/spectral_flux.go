@@ -16,15 +16,13 @@ type SpectalFluxVizNode struct {
 	cachedBufLen int
 }
 
-func NewSpectalFluxVizNode(id string, input core.Node) *SpectalFluxVizNode {
+func NewSpectalFluxVizNode(id string) *SpectalFluxVizNode {
 	n := &SpectalFluxVizNode{
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
-			Input:   input,
 		},
 	}
-	input.AddDownstream(n)
 	return n
 }
 
@@ -75,10 +73,14 @@ func (n *SpectalFluxVizNode) Reconfigure(cfg core.ConfigMap, provider core.NodeP
 
 	fluxNode := provider.GetFluxNode(channelConfig, winSize)
 
+	if n.Input == nil {
+		n.Input = fluxNode
+		fluxNode.AddDownstream(n)
+		return nil
+	}
+
 	if n.Input.GetId() != fluxNode.GetId() {
-		if n.Input != nil {
-			n.Input.RemoveDownstream(n)
-		}
+		n.Input.RemoveDownstream(n)
 		fluxNode.AddDownstream(n)
 		n.Input = fluxNode
 	}

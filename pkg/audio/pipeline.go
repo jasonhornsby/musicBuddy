@@ -87,24 +87,51 @@ func (pm *PipelineManager) GetFluxNode(mode core.ChannelMode, size int) core.Nod
 	})
 }
 
-func (pm *PipelineManager) CreateVisualizer(id string, vizType string, cfg VizCfg) {
+func (pm *PipelineManager) CreateVisualizer(id string, vizType string) error {
 	var vizNode core.VizNode
 
+	// Instantiate the visualizer node
 	switch vizType {
 	case "waveform":
-		audioSrc := pm.GetChannelNode(cfg.Channel)
-		vizNode = viz.NewWaveVizNode(id, audioSrc)
+		vizNode = viz.NewWaveVizNode(id)
 	case "spectral_flux":
-		input := pm.GetFluxNode(cfg.Channel, cfg.WindowSize)
-		vizNode = viz.NewSpectalFluxVizNode(id, input)
+		vizNode = viz.NewSpectalFluxVizNode(id)
 	default:
+		// TODO: Return an error instead of panicking
 		panic("invalid visualizer type: " + vizType)
 	}
+
+	// Register the visualizer node
 	pm.vizNodes[id] = vizNode
+
+	// Autoconfigure the visualizer node
+	schema := vizNode.GetSchema()
+	defaultCfg := make(map[string]any)
+
+	for _, param := range schema {
+		defaultCfg[param.Key] = param.Default
+	}
+
+	err := pm.ConfigureVizNode(id, defaultCfg)
+	if err != nil {
+		delete(pm.vizNodes, id)
+		return fmt.Errorf("failed to autoconfigure visualizer: %w", err)
+	}
+
+	return nil
 }
 
-// TODO: The cfg should not be a WaveformConfig, but a NodeConfig
-// This way we can use the same function to configure any visualizer node
+func (pm *PipelineManager) GetVizSchema(id string) ([]core.ParamDef, error) {
+	node, ok := pm.vizNodes[id]
+	if !ok {
+		return nil, fmt.Errorf("visualizer not found: %s", id)
+	}
+
+	// TODO: Check if this is a VizNode or ComputeNode
+
+	return node.GetSchema(), nil
+}
+
 func (pm *PipelineManager) ConfigureVizNode(id string, cfgRaw map[string]interface{}) error {
 	vizNode, ok := pm.vizNodes[id]
 	if !ok {

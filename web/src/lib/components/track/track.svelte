@@ -23,8 +23,12 @@
 
 	const audioContext = getAudioContext();
 	const workerManager = audioContext.getAudioWorkerManager();
+
+
 	const waveformViz = new WaveformVisualisation(300);
 	const spectrumViz = new SpectrumVisualisation(1000);
+
+	const configSchema = $derived(workerManager.configSchema);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const visualisations: Visualisation<any>[] = [waveformViz, spectrumViz];

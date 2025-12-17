@@ -7,14 +7,14 @@ const (
 )
 
 type ParamDef struct {
-	Key     string      `json:"key"`
-	Label   string      `json:"label"`
-	Type    string      `json:"type"`
-	Default interface{} `json:"default"`
-	Min     float64     `json:"min,omitempty"`
-	Max     float64     `json:"max,omitempty"`
-	Step    float64     `json:"step,omitempty"`
-	Options []string    `json:"options,omitempty"`
+	Key     string   `json:"key"`
+	Label   string   `json:"label"`
+	Type    string   `json:"type"`
+	Default any      `json:"default"`
+	Min     float64  `json:"min,omitempty"`
+	Max     float64  `json:"max,omitempty"`
+	Step    float64  `json:"step,omitempty"`
+	Options []string `json:"options,omitempty"`
 }
 
 type ConfigMap map[string]interface{}

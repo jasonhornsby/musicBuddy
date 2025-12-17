@@ -4,6 +4,17 @@ import type { BaseVizConfig } from "$lib/types/nodeConfig";
 import AudioWorker from './audio.worker.ts?worker';
 import type { RenderTree } from "$lib/components/track/pipeline-graph.svelte";
 
+type ParamDef = {
+    key: string;
+    label: string;
+    type: string;
+    default: any;
+    min?: number;
+    max?: number;
+    step?: number;
+    options?: string[];
+};
+
 export class AudioWorkerManager {
     public isReady = $state(false);
     public isAudioLoaded = $state(false);
@@ -15,6 +26,7 @@ export class AudioWorkerManager {
         nodes: [],
         edges: []
     });
+    public configSchema: ParamDef[] = $state([]);
 
     constructor() {
         this.worker = new AudioWorker();
@@ -42,6 +54,11 @@ export class AudioWorkerManager {
                         break;
                     }
                     this.visualisations[data.id].draw();
+                    break;
+                case 'viz_created':
+                    this.renderTree = JSON.parse(data.tree) as RenderTree;
+                    this.configSchema = JSON.parse(data.schema) as ParamDef[];
+                    console.log('[TS] Viz created:', { renderTree: this.renderTree, configSchema: this.configSchema });
                     break;
                 case 'viz_configured':
                     // Config applied, now trigger an update to refresh the viz

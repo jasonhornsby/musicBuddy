@@ -16,15 +16,13 @@ type WaveVizNode struct {
 	cachedBufLen int
 }
 
-func NewWaveVizNode(id string, input core.Node) *WaveVizNode {
+func NewWaveVizNode(id string) *WaveVizNode {
 	n := &WaveVizNode{
 		BaseNode: core.BaseNode{
 			ID:      id,
 			IsDirty: true,
-			Input:   input,
 		},
 	}
-	input.AddDownstream(n)
 	return n
 }
 
@@ -145,10 +143,14 @@ func (n *WaveVizNode) Reconfigure(cfg core.ConfigMap, provider core.NodeProvider
 
 	channelNode := provider.GetChannelNode(channelConfig)
 
+	if n.Input == nil {
+		n.Input = channelNode
+		channelNode.AddDownstream(n)
+		return nil
+	}
+
 	if n.Input.GetId() != channelNode.GetId() {
-		if n.Input != nil {
-			n.Input.RemoveDownstream(n)
-		}
+		n.Input.RemoveDownstream(n)
 		channelNode.AddDownstream(n)
 		n.Input = channelNode
 	}
