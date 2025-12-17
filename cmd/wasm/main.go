@@ -5,7 +5,6 @@ import (
 	"syscall/js"
 
 	"parse_audio/pkg/audio"
-	"parse_audio/pkg/audio/core"
 )
 
 var (
@@ -107,9 +106,6 @@ func handleCreateViz(data js.Value) {
 	})
 
 	pipelineManager.UpdateViz(id)
-	postMessage("viz_updated", map[string]any{
-		"id": id,
-	})
 	postMessage("viz_ready", map[string]any{
 		"id": id,
 	})
@@ -118,37 +114,35 @@ func handleCreateViz(data js.Value) {
 func handleConfigureViz(data js.Value) {
 	println("[Go] Configuring visualizer")
 	id := data.Get("id").String()
-	configJS := data.Get("config").String()
-
-	cfg := map[string]interface{}{}
-	err := json.Unmarshal([]byte(configJS), &cfg)
+	configJS := data.Get("config")
+	jsonStr := js.Global().Get("JSON").Call("stringify", configJS).String()
+	cfg := map[string]any{}
+	err := json.Unmarshal([]byte(jsonStr), &cfg)
 	if err != nil {
-		postMessage("error", map[string]interface{}{
+		println("[Go] Error unmarshalling config: ", err.Error())
+		postMessage("error", map[string]any{
 			"message": err.Error(),
 		})
 		return
 	}
 	err = pipelineManager.ConfigureVizNode(id, cfg)
 	if err != nil {
-		postMessage("error", map[string]interface{}{
+		postMessage("error", map[string]any{
 			"message": err.Error(),
 		})
 		return
 	}
-	postMessage("viz_configured", map[string]interface{}{
+	postMessage("viz_configured", map[string]any{
 		"id": id,
 	})
+	sendRenderTree()
 }
 
-func parseChannelMode(s string) core.ChannelMode {
-	switch s {
-	case "left":
-		return core.ChannelLeft
-	case "right":
-		return core.ChannelRight
-	default:
-		return core.ChannelMix
-	}
+func sendRenderTree() {
+	treeJSON, _ := json.Marshal(pipelineManager.GetRenderTree())
+	postMessage("render_tree_updated", map[string]any{
+		"tree": string(treeJSON),
+	})
 }
 
 func postMessage(msgType string, payload map[string]interface{}) {

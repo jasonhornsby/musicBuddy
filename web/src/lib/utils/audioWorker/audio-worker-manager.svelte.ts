@@ -3,6 +3,7 @@ import type { Visualisation } from "../visualiser.svelte";
 import type { BaseVizConfig } from "$lib/types/nodeConfig";
 import AudioWorker from './audio.worker.ts?worker';
 import type { RenderTree } from "$lib/components/track/pipeline-graph.svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 type ParamDef = {
     key: string;
@@ -26,7 +27,7 @@ export class AudioWorkerManager {
         nodes: [],
         edges: []
     });
-    public configSchema: ParamDef[] = $state([]);
+    public configSchemas: SvelteMap<string, ParamDef[]> = new SvelteMap();
 
     constructor() {
         this.worker = new AudioWorker();
@@ -57,8 +58,8 @@ export class AudioWorkerManager {
                     break;
                 case 'viz_created':
                     this.renderTree = JSON.parse(data.tree) as RenderTree;
-                    this.configSchema = JSON.parse(data.schema) as ParamDef[];
-                    console.log('[TS] Viz created:', { renderTree: this.renderTree, configSchema: this.configSchema });
+                    this.configSchemas.set(data.id, JSON.parse(data.schema) as ParamDef[]);
+                    console.log('[TS] Viz created:', { renderTree: this.renderTree, configSchema: this.configSchemas.get(data.id) });
                     break;
                 case 'viz_configured':
                     // Config applied, now trigger an update to refresh the viz

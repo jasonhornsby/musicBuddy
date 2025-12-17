@@ -132,7 +132,7 @@ func (pm *PipelineManager) GetVizSchema(id string) ([]core.ParamDef, error) {
 	return node.GetSchema(), nil
 }
 
-func (pm *PipelineManager) ConfigureVizNode(id string, cfgRaw map[string]interface{}) error {
+func (pm *PipelineManager) ConfigureVizNode(id string, cfgRaw map[string]any) error {
 	vizNode, ok := pm.vizNodes[id]
 	if !ok {
 		return fmt.Errorf("visualizer not found: %s", id)

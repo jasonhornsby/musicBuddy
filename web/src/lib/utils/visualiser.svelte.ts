@@ -111,7 +111,7 @@ export class WaveformVisualisation extends Visualisation<WaveformConfig> {
 
     public draw(): void {
         if (!this.ctx) {
-            throw new Error('Context not registered');
+            return;
         }
 
         // Clear the entire canvas before redrawing
@@ -258,7 +258,7 @@ export class SpectrumVisualisation extends Visualisation<SpectrumConfig> {
 
     public draw(): void {
         if (!this.ctx) {
-            throw new Error('Context not registered');
+            return;
         }
 
         // Clear the entire canvas before redrawing

@@ -16,7 +16,6 @@
 		SelectContent,
 		SelectItem,
 	} from "../ui/select";
-	import type { ChannelMode } from "$lib/types/nodeConfig";
 	import { getAudioContext } from "$lib/context/audio.svelte";
 	import { SpectrumVisualisation, WaveformVisualisation, Visualisation } from "$lib/utils/visualiser.svelte";
 
@@ -28,8 +27,6 @@
 	const waveformViz = new WaveformVisualisation(300);
 	const spectrumViz = new SpectrumVisualisation(1000);
 
-	const configSchema = $derived(workerManager.configSchema);
-
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const visualisations: Visualisation<any>[] = [waveformViz, spectrumViz];
 
@@ -38,7 +35,6 @@
 
 	const trackName = $state("Track 1");
 
-	let channel = $state<ChannelMode>('mix');
 	let selectedVizId = $state<string>(waveformViz.id);
 	let showRenderGraph = $state(false);
 
@@ -46,10 +42,15 @@
 		visualisations.find((v) => v.id === selectedVizId) ?? spectrumViz
 	);
 
-	$effect(() => {
-		// waveformViz.updateConfig({ channel});
-		spectrumViz.updateConfig({ channel, windowSize: 1024 });
-	});
+	const configSchema = $derived(workerManager.configSchemas.get(selectedVizId) ?? []);
+
+	function getConfigValue(key: string): unknown {
+		return selectedVisualisation.config[key as keyof typeof selectedVisualisation.config];
+	}
+
+	function updateConfig(key: string, value: unknown) {
+		selectedVisualisation.updateConfig({ [key]: value });
+	}
 </script>
 
 <div
@@ -85,38 +86,7 @@
 			</DropdownMenu>
 		</div>
 
-		<div class="flex flex-col gap-2 px-2 py-2">
-			<div class="flex flex-col gap-1">
-				<span class="text-[10px] font-medium text-slate-500 uppercase tracking-[0.14em]">
-					Channel
-				</span>
-				<ButtonGroup class="mt-0.5 w-full">
-					<Button
-						variant={channel === 'left' ? 'default' : 'outline'}
-						size="sm"
-						class="flex-1 text-[11px] px-1.5"
-						onclick={() => (channel = 'left')}
-					>
-						Left
-					</Button>
-					<Button
-						variant={channel === 'right' ? 'default' : 'outline'}
-						size="sm"
-						class="flex-1 text-[11px] px-1.5"
-						onclick={() => (channel = 'right')}
-					>
-						Right
-					</Button>
-					<Button
-						variant={channel === 'mix' ? 'default' : 'outline'}
-						size="sm"
-						class="flex-1 text-[11px] px-1.5"
-						onclick={() => (channel = 'mix')}
-					>
-						Mix
-					</Button>
-				</ButtonGroup>
-			</div>
+		<div class="flex flex-col gap-2 px-2 py-2 overflow-y-auto">
 			<div class="flex flex-col gap-1">
 				<span class="text-[10px] font-medium text-slate-500 uppercase tracking-[0.14em]">
 					Visualisation
@@ -139,6 +109,49 @@
 					</SelectContent>
 				</Select>
 			</div>
+
+			{#each configSchema as param (param.key)}
+				<div class="flex flex-col gap-1">
+					<span class="text-[10px] font-medium text-slate-500 uppercase tracking-[0.14em]">
+						{param.label}
+					</span>
+					{#if param.type === 'select' && param.options}
+						<ButtonGroup class="mt-0.5 w-full">
+							{#each param.options as option}
+								<Button
+									variant={getConfigValue(param.key) === option ? 'default' : 'outline'}
+									size="sm"
+									class="flex-1 text-[11px] px-1.5 capitalize"
+									onclick={() => updateConfig(param.key, option)}
+								>
+									{option}
+								</Button>
+							{/each}
+						</ButtonGroup>
+					{:else if param.type === 'int' || param.type === 'float'}
+						<div class="flex items-center gap-2">
+							<input
+								type="range"
+								min={param.min ?? 0}
+								max={param.max ?? 100}
+								step={param.type === 'int' ? (param.step ?? 1) : (param.step ?? 0.1)}
+								value={getConfigValue(param.key) as number}
+								oninput={(e) => {
+									const val =
+										param.type === 'int'
+											? parseInt(e.currentTarget.value)
+											: parseFloat(e.currentTarget.value);
+									updateConfig(param.key, val);
+								}}
+								class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-700"
+							/>
+							<span class="text-[11px] text-slate-600 min-w-[3ch] text-right">
+								{getConfigValue(param.key)}
+							</span>
+						</div>
+					{/if}
+				</div>
+			{/each}
 		</div>
 	</aside>
 	<div class="flex-[300px] h-[300px] md:h-auto md:flex-1">
