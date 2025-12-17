@@ -2,19 +2,7 @@ import type { AudioBufferSetup } from "$lib/utils/audioBufferManager";
 import type { Visualisation } from "../visualiser.svelte";
 import type { BaseVizConfig } from "$lib/types/nodeConfig";
 import AudioWorker from './audio.worker.ts?worker';
-
-type RenderTree = {
-    nodes: {
-        id: string;
-        type: string;
-        category: string;
-        label: string;
-    }[];
-    edges: {
-        from: string;
-        to: string;
-    }[];
-}
+import type { RenderTree } from "$lib/components/track/pipeline-graph.svelte";
 
 export class AudioWorkerManager {
     public isReady = $state(false);
