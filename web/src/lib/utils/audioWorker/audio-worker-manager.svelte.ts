@@ -49,13 +49,18 @@ export class AudioWorkerManager {
                 case 'viz_ready':
                     this.visualisations[data.id].setReady(true);
                     break;
+                case 'viz_computing':
+                    this.visualisations[data.id].setComputing(true);
+                    break;
                 case 'viz_updated':
+                    this.visualisations[data.id].setComputing(false);
                     if (!this.visualisations[data.id].ready) {
                         break;
                     }
                     this.visualisations[data.id].draw();
                     break;
                 case 'viz_configured':
+                    this.visualisations[data.id].setComputing(false);
                     this.visualisations[data.id].draw();
                     break;
                 case 'viz_created':

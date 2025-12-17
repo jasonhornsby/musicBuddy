@@ -4,6 +4,7 @@ export abstract class Visualisation {
     abstract readonly name: string;
     abstract readonly description: string;
     ready: boolean = $state(false);
+    isComputing: boolean = $state(false);
     // Width of the output buffer not the visualisation itself
     // TODO: Evaluate if this is the best way to do this
     // We don't want to resise the buffer each time we resize the screen but for big screen width we 
@@ -48,6 +49,10 @@ export abstract class Visualisation {
         this.ready = ready;
     }
 
+    public setComputing(computing: boolean) {
+        this.isComputing = computing;
+    }
+
     public updateConfig(newConfig: Partial<Map<string, any>>) {
         this._config = { ...this._config, ...newConfig };
         this.onConfigChange?.(this._config);
@@ -85,7 +90,6 @@ export class WaveformVisualisation extends Visualisation {
             console.log('No buffer available for waveform visualisation');
             return;
         }
-        console.log(this.buffer);
 
         // Clear the entire canvas before redrawing
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);

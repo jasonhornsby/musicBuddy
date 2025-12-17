@@ -62,6 +62,12 @@ func handleLoadAudio(data js.Value) {
 func handleUpdateViz(data js.Value) {
 	println("[Go] Updating visualizer")
 	id := data.Get("id").String()
+
+	// Signal computation starting
+	postMessage("viz_computing", map[string]any{
+		"id": id,
+	})
+
 	pipelineManager.UpdateViz(id)
 	postMessage("viz_updated", map[string]any{
 		"id": id,
@@ -120,6 +126,12 @@ func handleConfigureViz(data js.Value) {
 		})
 		return
 	}
+
+	// Signal computation starting
+	postMessage("viz_computing", map[string]any{
+		"id": id,
+	})
+
 	err = pipelineManager.ConfigureVizNode(id, cfg)
 	if err != nil {
 		postMessage("error", map[string]any{
