@@ -27,7 +27,6 @@ export class AudioWorkerManager {
         edges: []
     });
     public configSchemas: SvelteMap<string, ParamDef[]> = new SvelteMap();
-    private vizBuffers = new Map<string, Float32Array>();
 
     constructor() {
         this.worker = new AudioWorker();
