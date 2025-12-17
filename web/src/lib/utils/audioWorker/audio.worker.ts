@@ -38,7 +38,7 @@ self.allocateVizBuffer = (id: string, size: number) => {
     self.postMessage({
         type: 'buffer_allocated',
         id,
-        buffer: Array.from(new Uint8Array(buffer))
+        buffer: buffer
     });
     return new Uint8Array(buffer)
 }

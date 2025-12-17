@@ -127,6 +127,7 @@ func handleConfigureViz(data js.Value) {
 		})
 		return
 	}
+	pipelineManager.UpdateViz(id)
 	postMessage("viz_configured", map[string]any{
 		"id": id,
 	})

@@ -56,6 +56,9 @@ export class AudioWorkerManager {
                     }
                     this.visualisations[data.id].draw();
                     break;
+                case 'viz_configured':
+                    this.visualisations[data.id].draw();
+                    break;
                 case 'viz_created':
                     this.renderTree = JSON.parse(data.tree) as RenderTree;
                     this.configSchemas.set(data.id, JSON.parse(data.schema) as ParamDef[]);
@@ -66,8 +69,9 @@ export class AudioWorkerManager {
                     this.renderTree = JSON.parse(data.tree) as RenderTree;
                     break;
                 case 'buffer_allocated':
-                    console.log('[TS] Buffer allocated:', data.id, data.buffer.length);
-                    this.visualisations[data.id].buffer = Float32Array.from(data.buffer);
+                    console.log('[TS] Buffer allocated:', data.id, data.buffer.byteLength);
+                    this.visualisations[data.id].buffer = new Float32Array(data.buffer);
+                    this.visualisations[data.id].draw();
                     break;
                 default:
                     console.warn(`Unknown message type: ${type}`);
