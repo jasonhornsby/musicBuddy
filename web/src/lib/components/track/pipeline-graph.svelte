@@ -34,6 +34,9 @@
 	// We use standard $state for the arrays. Svelte Flow handles the internal reactivity.
 	let nodes = $state<Node[]>([]);
 	let edges = $state<Edge[]>([]);
+	
+	// Track node count to trigger fitView when nodes change
+	let nodeCount = $state(0);
 
 	// --- LAYOUT LOGIC (DAGRE) ---
 
@@ -112,14 +115,17 @@
 
 		nodes = layout.nodes;
 		edges = layout.edges;
+		nodeCount = layout.nodes.length;
 	});
 </script>
 
 <div class="graph-container">
-	<SvelteFlow {nodes} {edges} fitView minZoom={0.5} maxZoom={2}>
-		<Background bgColor="#444" gap={20} size={1} />
-		<Controls />
-	</SvelteFlow>
+	{#key nodeCount}
+		<SvelteFlow {nodes} {edges} fitView fitViewOptions={{ padding: 0.3 }} minZoom={0.5} maxZoom={2}>
+			<Background bgColor="#444" gap={20} size={1} />
+			<Controls />
+		</SvelteFlow>
+	{/key}
 </div>
 
 <style>
