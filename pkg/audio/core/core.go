@@ -25,7 +25,7 @@ type Node interface {
 	Invalidate()
 	AddDownstream(n Node)
 	RemoveDownstream(n Node)
-	GetData() (interface{}, error)
+	GetData() (any, error)
 	GetInput() Node
 	GetComputeDurationMs() int
 }

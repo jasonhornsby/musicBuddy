@@ -126,9 +126,7 @@
 	/* The container must have a height for Svelte Flow to render */
 	.graph-container {
 		width: 100%;
-		height: 300px; /* Adjust as needed */
-		border: 1px solid #333;
-		border-radius: 8px;
+		height: 100%;
 		background: #1a1a1a;
 	}
 

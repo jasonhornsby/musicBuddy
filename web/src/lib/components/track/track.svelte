@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EllipsisVertical, Workflow, Trash2 } from "lucide-svelte";
+	import { EllipsisVertical, Trash2 } from "lucide-svelte";
 	import VisualisationCanvas from "../analyser/panels/visualisation.svelte";
 	import PipelineGraph from "./pipeline-graph.svelte";
 	import Button from "../ui/button/button.svelte";
@@ -16,6 +16,11 @@
 		SelectContent,
 		SelectItem,
 	} from "../ui/select";
+	import {
+		ResizablePaneGroup,
+		ResizablePane,
+		ResizableHandle,
+	} from "../ui/resizable";
 	import { getAudioContext } from "$lib/context/audio.svelte";
 	import { SpectrumVisualisation, WaveformVisualisation, Visualisation } from "$lib/utils/visualiser.svelte";
 
@@ -36,7 +41,6 @@
 	const trackName = $state("Track 1");
 
 	let selectedVizId = $state<string>(waveformViz.id);
-	let showRenderGraph = $state(false);
 
 	const selectedVisualisation = $derived(
 		visualisations.find((v) => v.id === selectedVizId) ?? spectrumViz
@@ -53,12 +57,9 @@
 	}
 </script>
 
-<div
-	class="h-[280px] w-full rounded-lg border border-slate-200 bg-white flex flex-col md:flex-row overflow-hidden shadow-sm"
->
-	<aside
-		class="w-full md:w-48 md:max-w-[28%] border-r border-slate-200 bg-slate-50/80 text-[11px] flex flex-col"
-	>
+<div class="h-full w-full flex flex-row overflow-hidden">
+	<!-- Sidebar -->
+	<aside class="w-48 shrink-0 border-r border-slate-200 bg-slate-50/80 text-[11px] flex flex-col">
 		<div class="flex items-center justify-between gap-1.5 px-2 py-2 border-b border-slate-100">
 			<div class="flex flex-col gap-0.5 min-w-0">
 				<h2 class="text-[12px] font-semibold text-slate-800 truncate">
@@ -74,10 +75,6 @@
 					{/snippet}
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuItem onclick={() => (showRenderGraph = !showRenderGraph)}>
-						<Workflow class="w-4 h-4" />
-						{showRenderGraph ? 'Hide render graph' : 'Show render graph'}
-					</DropdownMenuItem>
 					<DropdownMenuItem onclick={() => console.log('Remove track clicked')}>
 						<Trash2 class="w-4 h-4" />
 						Remove track
@@ -154,13 +151,29 @@
 			{/each}
 		</div>
 	</aside>
-	<div class="flex-[300px] h-[300px] md:h-auto md:flex-1">
-		{#if showRenderGraph}
-			<PipelineGraph data={workerManager.renderTree} />
-		{:else if selectedVisualisation.ready}
-			<VisualisationCanvas visualisation={selectedVisualisation} />
-		{:else}
-			<span>Loading...</span>
-		{/if}
-	</div>
+
+	<!-- Main content area with resizable panels -->
+	<ResizablePaneGroup direction="vertical" class="flex-1 min-w-0">
+		<!-- Visualization area -->
+		<ResizablePane defaultSize={70} minSize={30}>
+			<div class="w-full h-full bg-white">
+				{#if selectedVisualisation.ready}
+					<VisualisationCanvas visualisation={selectedVisualisation} />
+				{:else}
+					<div class="w-full h-full flex items-center justify-center text-slate-400 text-sm">
+						Loading...
+					</div>
+				{/if}
+			</div>
+		</ResizablePane>
+
+		<ResizableHandle withHandle />
+
+		<!-- Pipeline graph - always visible at the bottom -->
+		<ResizablePane defaultSize={30} minSize={15}>
+			<div class="w-full h-full bg-slate-900">
+				<PipelineGraph data={workerManager.renderTree} />
+			</div>
+		</ResizablePane>
+	</ResizablePaneGroup>
 </div>

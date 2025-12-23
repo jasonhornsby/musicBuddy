@@ -22,7 +22,7 @@
 <AddTrack bind:open={addTrackOpen} />
 
 <div class="w-full h-dvh flex flex-col">
-	<header class="px-2 py-1 border-b flex flex-row gap-2 items-center">
+	<header class="px-2 py-1 border-b flex flex-row gap-2 items-center shrink-0">
 		<Button size="icon-sm" variant="ghost">
 			<Music size={18} />
 		</Button>
@@ -38,11 +38,11 @@
 			</MenubarMenu>
 		</Menubar>
 	</header>
-	<main class="flex-1 overflow-hidden flex flex-row bg-gray-50 p-2">
+	<main class="flex-1 overflow-hidden flex flex-row min-h-0">
 		{#if audioContext.isAudioLoaded}
 			<Track />
 		{:else}
-			<Empty class="flex-1">
+			<Empty class="flex-1 bg-gray-50">
 				<EmptyHeader>
 					<EmptyMedia variant="icon" class="bg-primary/10 text-primary">
 						<Music size={22} />
